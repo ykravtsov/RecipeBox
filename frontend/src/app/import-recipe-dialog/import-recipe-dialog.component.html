@@ -1,0 +1,68 @@
+<h2 mat-dialog-title>Import Recipe from Website</h2>
+<mat-dialog-content>
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Recipe URL</mat-label>
+    <input
+      matInput
+      [(ngModel)]="url"
+      placeholder="https://example.com/recipe"
+    />
+  </mat-form-field>
+
+  <div class="actions">
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="scrapeRecipe()"
+      [disabled]="!url || isLoading"
+    >
+      <span *ngIf="!isLoading">Scrape Recipe</span>
+      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+    </button>
+  </div>
+
+  <div *ngIf="scrapedRecipe" class="scraped-recipe">
+    <h3>{{ scrapedRecipe.title }}</h3>
+    <p>{{ scrapedRecipe.description }}</p>
+
+    <h4>Ingredients:</h4>
+    <ul>
+      <li *ngFor="let ingredient of scrapedRecipe.ingredients">
+        {{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}
+      </li>
+    </ul>
+
+    <h4>Steps:</h4>
+    <ol>
+      <li *ngFor="let step of scrapedRecipe.steps">{{ step }}</li>
+    </ol>
+
+    <h4>Select an Image:</h4>
+    <div class="image-selection">
+      <div
+        class="image-option"
+        *ngFor="
+          let imageUrl of ['placeholder1', 'placeholder2', 'placeholder3']
+        "
+        [class.selected]="selectedImageUrl === imageUrl"
+        (click)="selectImage(imageUrl)"
+      >
+        <img
+          [src]="'https://via.placeholder.com/100x100?text=' + imageUrl"
+          [alt]="imageUrl"
+        />
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="saveRecipe()"
+    [disabled]="!scrapedRecipe"
+  >
+    Save Recipe
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,41 @@
+# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# User-specific files
+.vscode/
+*.user
+
+# Environment and configuration files with sensitive data
+appsettings.json
+# Keep appsettings.Development.json as a template
+!appsettings.Development.json
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite
+
+# Docker
+.dockerignore
+
+# IDE files
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if any frontend)
+node_modules/
+
+# Temporary files
+*.tmp
+*.temp
