@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+// Trigger CI/CD pipeline
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
