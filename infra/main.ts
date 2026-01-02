@@ -9,6 +9,8 @@ import { KubernetesProvider } from "@cdktf/provider-kubernetes/lib/provider";
 import { HelmProvider } from "@cdktf/provider-helm/lib/provider";
 import { Namespace } from "@cdktf/provider-kubernetes/lib/namespace";
 import { Release } from "@cdktf/provider-helm/lib/release";
+import { PostgresqlFlexibleServer } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server";
+import { PostgresqlFlexibleServerDatabase } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-database";
 
 class MyStack extends TerraformStack {
     constructor(scope: Construct, id: string) {
@@ -28,6 +30,23 @@ class MyStack extends TerraformStack {
             resourceGroupName: rg.name,
             location: rg.location,
             sku: "Basic",
+        });
+
+        const pgServer = new PostgresqlFlexibleServer(this, "pgServer", {
+            name: "recipebox-pg",
+            resourceGroupName: rg.name,
+            location: rg.location,
+            skuName: "B_Standard_B1ms",
+            storageMb: 32768,
+            version: "15",
+            administratorLogin: "pgadmin",
+            administratorPassword: "P@ssw0rd123!", // Use a secret in production
+            zone: "1",
+        });
+
+        new PostgresqlFlexibleServerDatabase(this, "pgDb", {
+            name: "recipebox",
+            serverId: pgServer.id,
         });
 
         const aks = new KubernetesCluster(this, "aks", {

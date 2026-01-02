@@ -25,16 +25,23 @@ jobs:
           cd api
           dotnet test --verbosity normal
 
-      - name: Build and push Docker image
+      - name: Build and push API Docker image
         run: |
           az acr login --name recipeboxacr
           cd api
           docker build -t recipeboxacr.azurecr.io/recipebox-api:${{ github.sha }} .
           docker push recipeboxacr.azurecr.io/recipebox-api:${{ github.sha }}
 
+      - name: Build and push Frontend Docker image
+        run: |
+          cd frontend
+          docker build -t recipeboxacr.azurecr.io/recipebox-frontend:${{ github.sha }} .
+          docker push recipeboxacr.azurecr.io/recipebox-frontend:${{ github.sha }}
+
       - name: Update Helm values
         run: |
-          sed -i "s/tag: .*/tag: \"${{ github.sha }}\"/" k8s/values.yaml
+          sed -i "s|recipebox-api:.*|recipebox-api:${{ github.sha }}|" k8s/values.yaml
+          sed -i "s|recipebox-frontend:.*|recipebox-frontend:${{ github.sha }}|" k8s/values.yaml
 
       - name: Commit and push changes
         run: |
