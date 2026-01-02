@@ -18,6 +18,9 @@ spec:
         imagePullPolicy: {{ .Values.api.image.pullPolicy }}
         ports:
         - containerPort: 8080
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "Host=recipebox-pg.postgres.database.azure.com;Database=recipebox;Username=pgadmin;Password=P@ssw0rd123!;SSL Mode=Require;Trust Server Certificate=true"
         resources:
           {{- toYaml .Values.api.resources | nindent 12 }}
 ---
