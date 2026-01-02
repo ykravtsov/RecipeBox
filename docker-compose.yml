@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: recipebox
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      target: build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=recipebox;Username=postgres;Password=password
+      DOTNET_USE_POLLING_FILE_WATCHER: true
+      ASPNETCORE_URLS: http://*:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/src
+      - /src/bin
+      - /src/obj
+    command: ["dotnet", "watch", "run", "--non-interactive", "--urls", "http://*:8080"]
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    depends_on:
+      - api
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+
+volumes:
+  postgres_data:
