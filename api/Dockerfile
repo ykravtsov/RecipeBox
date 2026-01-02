@@ -2,6 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["api.csproj", "."]
+RUN dotnet nuget locals all --clear
 RUN dotnet restore
 COPY . .
 RUN dotnet build -c Release --no-restore
