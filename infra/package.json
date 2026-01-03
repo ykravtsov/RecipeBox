@@ -19,9 +19,9 @@
   "license": "MPL-2.0",
   "private": true,
   "dependencies": {
-    "@cdktf/provider-azurerm": "^12.0.0",
-    "@cdktf/provider-helm": "^9.0.0",
-    "@cdktf/provider-kubernetes": "^9.0.0",
+    "@cdktf/provider-azurerm": "^13.0.0",
+    "@cdktf/provider-helm": "^10.0.0",
+    "@cdktf/provider-kubernetes": "^10.0.0",
     "cdktf": "^0.20.0",
     "constructs": "^10.0.0"
   },
