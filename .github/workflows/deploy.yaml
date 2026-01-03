@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "api/**"
 
 jobs:
   build-and-deploy:
@@ -14,16 +12,73 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files_yaml: |
+            infra:
+              - infra/**
+            api:
+              - api/**
+            frontend:
+              - frontend/**
+            k8s:
+              - k8s/**
+            github:
+              - .github/**
 
       - name: Log in to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Run tests
+      - name: Check if infrastructure exists
+        id: check-infra
+        run: |
+          if az acr show --name recipeboxacr --resource-group rg-recipebox --query "name" -o tsv 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        if: steps.check-infra.outputs.exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install CDKTF CLI
+        if: steps.check-infra.outputs.exists == 'false'
+        run: npm install -g cdktf-cli
+
+      - name: Install dependencies
+        if: steps.check-infra.outputs.exists == 'false'
+        run: |
+          cd infra
+          npm install
+
+      - name: Deploy infrastructure
+        if: steps.check-infra.outputs.exists == 'false'
+        env:
+          GITHUB_REPOSITORY_URL: https://github.com/${{ github.repository }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          cd infra
+          cdktf deploy --auto-approve
+
+      - name: Run API tests
         run: |
           cd api
           dotnet test --verbosity normal
+
+      - name: Setup Node.js for frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
 
       - name: Build and push API Docker image
         run: |
@@ -32,16 +87,32 @@ jobs:
           docker build -t recipeboxacr.azurecr.io/recipebox-api:${{ github.sha }} .
           docker push recipeboxacr.azurecr.io/recipebox-api:${{ github.sha }}
 
-      - name: Build and push Frontend Docker image
+      - name: Build and deploy Frontend to CDN
+        if: steps.changed-files.outputs.frontend_any_changed == 'true'
         run: |
           cd frontend
-          docker build -t recipeboxacr.azurecr.io/recipebox-frontend:${{ github.sha }} .
-          docker push recipeboxacr.azurecr.io/recipebox-frontend:${{ github.sha }}
+          npm install
+          npm run build --prod
+          az storage blob upload-batch --account-name recipeboxstorage --destination '$web' --source dist/frontend --overwrite
+          az cdn endpoint purge --resource-group rg-recipebox --profile-name recipebox-cdn --name recipebox-frontend --content-paths '/*'
+
+      - name: Run Playwright tests
+        if: steps.changed-files.outputs.frontend_any_changed == 'true'
+        env:
+          CI: true
+        run: |
+          cd frontend
+          npx playwright install
+          npm run start &
+          sleep 10
+          docker-compose -f ../../docker-compose.yml up -d api postgres
+          sleep 30
+          npx playwright test
+          docker-compose -f ../../docker-compose.yml down
 
       - name: Update Helm values
         run: |
           sed -i "s|recipebox-api:.*|recipebox-api:${{ github.sha }}|" k8s/values.yaml
-          sed -i "s|recipebox-frontend:.*|recipebox-frontend:${{ github.sha }}|" k8s/values.yaml
 
       - name: Commit and push changes
         run: |

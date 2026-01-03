@@ -23,26 +23,3 @@ spec:
           value: "Host=recipebox-pg.postgres.database.azure.com;Database=recipebox;Username=pgadmin;Password=P@ssw0rd123!;SSL Mode=Require;Trust Server Certificate=true"
         resources:
           {{- toYaml .Values.api.resources | nindent 12 }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ include "recipebox.fullname" . }}-frontend
-spec:
-  replicas: {{ .Values.frontend.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ include "recipebox.name" . }}-frontend
-  template:
-    metadata:
-      labels:
-        app: {{ include "recipebox.name" . }}-frontend
-    spec:
-      containers:
-      - name: frontend
-        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
-        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
-        ports:
-        - containerPort: 80
-        resources:
-          {{- toYaml .Values.frontend.resources | nindent 12 }}

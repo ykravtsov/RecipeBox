@@ -36,6 +36,11 @@ Thumbs.db
 # Node modules (if any frontend)
 node_modules/
 
+# CDKTF
+cdktf.out/
+.terraform/
+terraform.tfstate*
+
 # Temporary files
 *.tmp
 *.temp
