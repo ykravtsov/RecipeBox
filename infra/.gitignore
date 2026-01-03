@@ -1,0 +1,18 @@
+# CDKTF
+cdktf.out/
+cdktf.json
+.terraform/
+terraform.tfstate*
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db

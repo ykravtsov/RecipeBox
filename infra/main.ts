@@ -11,10 +11,18 @@ import { Namespace } from "@cdktf/provider-kubernetes/lib/namespace";
 import { Release } from "@cdktf/provider-helm/lib/release";
 import { PostgresqlFlexibleServer } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server";
 import { PostgresqlFlexibleServerDatabase } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-database";
+import { Manifest } from "@cdktf/provider-kubernetes/lib/manifest";
+import { StorageAccount } from "@cdktf/provider-azurerm/lib/storage-account";
+import { CdnProfile } from "@cdktf/provider-azurerm/lib/cdn-profile";
+import { CdnEndpoint } from "@cdktf/provider-azurerm/lib/cdn-endpoint";
 
 class MyStack extends TerraformStack {
     constructor(scope: Construct, id: string) {
         super(scope, id);
+
+        // Get repository URL from environment or use default
+        const repoUrl = process.env.GITHUB_REPOSITORY_URL || "https://github.com/your-org/recipebox";
+        const pgPassword = process.env.POSTGRES_PASSWORD || "P@ssw0rd123!";
 
         new AzurermProvider(this, "AzureRm", {
             features: {},
@@ -32,6 +40,36 @@ class MyStack extends TerraformStack {
             sku: "Basic",
         });
 
+        const storageAccount = new StorageAccount(this, "storage", {
+            name: "recipeboxstorage",
+            resourceGroupName: rg.name,
+            location: rg.location,
+            accountTier: "Standard",
+            accountReplicationType: "LRS",
+            staticWebsite: {
+                indexDocument: "index.html",
+                error404Document: "index.html",
+            },
+        });
+
+        const cdnProfile = new CdnProfile(this, "cdnProfile", {
+            name: "recipebox-cdn",
+            location: rg.location,
+            resourceGroupName: rg.name,
+            sku: "Standard_Microsoft",
+        });
+
+        const cdnEndpoint = new CdnEndpoint(this, "cdnEndpoint", {
+            name: "recipebox-frontend",
+            profileName: cdnProfile.name,
+            location: rg.location,
+            resourceGroupName: rg.name,
+            origin: {
+                name: "recipebox-origin",
+                hostName: storageAccount.primaryWebHost,
+            },
+        });
+
         const pgServer = new PostgresqlFlexibleServer(this, "pgServer", {
             name: "recipebox-pg",
             resourceGroupName: rg.name,
@@ -40,7 +78,7 @@ class MyStack extends TerraformStack {
             storageMb: 32768,
             version: "15",
             administratorLogin: "pgadmin",
-            administratorPassword: "P@ssw0rd123!", // Use a secret in production
+            administratorPassword: pgPassword,
             zone: "1",
         });
 
@@ -109,8 +147,53 @@ class MyStack extends TerraformStack {
             ],
         });
 
+        // ArgoCD Applications
+        const argocdAppNamespace = new Namespace(this, "argocd-apps-ns", {
+            metadata: {
+                name: "argocd-apps",
+            },
+        });
+
+        // RecipeBox API Application
+        new Manifest(this, "recipebox-api-app", {
+            manifest: {
+                apiVersion: "argoproj.io/v1alpha1",
+                kind: "Application",
+                metadata: {
+                    name: "recipebox-api",
+                    namespace: "argocd",
+                },
+                spec: {
+                    project: "default",
+                    source: {
+                        repoURL: repoUrl,
+                        path: "k8s",
+                        targetRevision: "HEAD",
+                        helm: {
+                            valueFiles: ["values.yaml"],
+                        },
+                    },
+                    destination: {
+                        server: "https://kubernetes.default.svc",
+                        namespace: "default",
+                    },
+                    syncPolicy: {
+                        automated: {
+                            prune: true,
+                            selfHeal: true,
+                        },
+                    },
+                },
+            },
+        });
+
+
         new TerraformOutput(this, "kube_config", {
             value: aks.kubeConfigRaw,
+        });
+
+        new TerraformOutput(this, "cdn_endpoint", {
+            value: cdnEndpoint.hostName,
         });
     }
 }
