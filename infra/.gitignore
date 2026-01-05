@@ -1,6 +1,5 @@
 # CDKTF
 cdktf.out/
-cdktf.json
 .terraform/
 terraform.tfstate*
 
