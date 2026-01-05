@@ -1,120 +1,52 @@
-# RecipeBox
+# Conftest
 
-A full-stack recipe management application built with ASP.NET Core API and Angular frontend.
+[![Go Report Card](https://goreportcard.com/badge/open-policy-agent/opa)](https://goreportcard.com/report/open-policy-agent/conftest) [![Netlify](https://api.netlify.com/api/v1/badges/2d928746-3380-4123-b0eb-1fd74ba390db/deploy-status)](https://app.netlify.com/sites/vibrant-villani-65041c/deploys)
 
-## Features
+Conftest helps you write tests against structured configuration data. Using Conftest you can
+write tests for your Kubernetes configuration, Tekton pipeline definitions, Terraform code,
+Serverless configs or any other config files.
 
-- User authentication with JWT
-- Recipe CRUD operations
-- Recipe scraping from URLs
-- File storage for recipe images
-- PostgreSQL database
+Conftest uses the Rego language from [Open Policy Agent](https://www.openpolicyagent.org/) for writing
+the assertions. You can read more about Rego in [How do I write policies](https://www.openpolicyagent.org/docs/how-do-i-write-policies.html)
+in the Open Policy Agent documentation.
 
-## Prerequisites
+Here's a quick example. Save the following as `policy/deployment.rego`:
 
-- Docker and Docker Compose
+```rego
+package main
 
-## Setup
+deny[msg] {
+  input.kind == "Deployment"
+  not input.spec.template.spec.securityContext.runAsNonRoot
 
-1. Clone the repository
-2. Run `docker-compose up` to start all services
-3. The API will be available at `http://localhost:8080`
-4. The frontend will be available at `http://localhost:4200`
+  msg := "Containers must not run as root"
+}
 
-The application will automatically seed a test user and sample recipes on first run.
+deny[msg] {
+  input.kind == "Deployment"
+  not input.spec.selector.matchLabels.app
 
-## Test User
-
-For testing purposes, a test user is automatically created:
-
-- **Email:** test@example.com
-- **Password:** Test123!
-
-## API Endpoints
-
-### Authentication
-
-#### Login
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com", "password": "Test123!"}'
+  msg := "Containers must provide app label for pod selectors"
+}
 ```
 
-Response includes a JWT token. Use this token in the Authorization header for authenticated requests.
+Assuming you have a Kubernetes deployment in `deployment.yaml` you can run Conftest like so:
 
-### Recipes
+```console
+$ conftest test deployment.yaml
+FAIL - deployment.yaml - Containers must not run as root
+FAIL - deployment.yaml - Containers must provide app label for pod selectors
 
-#### Get All Recipes
-
-```bash
-curl -X GET http://localhost:8080/api/recipes \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions
 ```
 
-#### Get Recipe by ID
+Conftest isn't specific to Kubernetes. It will happily let you write tests for any configuration files in a variety of different formats. See the [documentation](https://www.conftest.dev/) for [installation instructions](https://www.conftest.dev/install/) and
+more details about the features.
 
-```bash
-curl -X GET http://localhost:8080/api/recipes/1 \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
+## Want to contribute to Conftest?
 
-#### Create Recipe
+* See [DEVELOPMENT.md](DEVELOPMENT.md) to build and test Conftest itself.
+* See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
-```bash
-curl -X POST http://localhost:8080/api/recipes \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "New Recipe",
-    "description": "Description",
-    "ingredients": [
-      {"name": "Ingredient 1", "quantity": 1, "unit": "cup"}
-    ],
-    "steps": ["Step 1", "Step 2"]
-  }'
-```
-
-#### Update Recipe
-
-```bash
-curl -X PUT http://localhost:8080/api/recipes/1 \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": 1,
-    "title": "Updated Recipe",
-    "description": "Updated description",
-    "ingredients": [
-      {"name": "Ingredient 1", "quantity": 1, "unit": "cup"}
-    ],
-    "steps": ["Step 1", "Step 2"]
-  }'
-```
-
-#### Delete Recipe
-
-```bash
-curl -X DELETE http://localhost:8080/api/recipes/1 \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-#### Scrape Recipe (Anonymous)
-
-```bash
-curl -X POST http://localhost:8080/api/recipes/scrape-recipe \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/recipe"}'
-```
-
-## Development
-
-For development with hot reload:
-
-```bash
-docker-compose up api  # API with HMR
-docker-compose up frontend  # Frontend with HMR
-```
-
-The API will watch for file changes and automatically recompile.
+For discussions and questions join us on the [Open Policy Agent Slack](https://slack.openpolicyagent.org/)
+in the `#opa-conftest` channel.
