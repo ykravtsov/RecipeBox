@@ -44,3 +44,6 @@ terraform.tfstate*
 # Temporary files
 *.tmp
 *.temp
+
+# Generated infrastructure files
+infra/generated/
