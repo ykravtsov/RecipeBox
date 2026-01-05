@@ -25,12 +25,15 @@ class MyStack extends TerraformStack {
         const pgPassword = process.env.POSTGRES_PASSWORD || "P@ssw0rd123!";
 
         new AzurermProvider(this, "AzureRm", {
-            features: {},
+            features: [{}],
         });
 
         const rg = new ResourceGroup(this, "rg", {
             name: "rg-recipebox",
             location: "East US",
+            tags: {
+                Environment: "dev",
+            },
         });
 
         const acr = new ContainerRegistry(this, "acr", {
@@ -38,6 +41,9 @@ class MyStack extends TerraformStack {
             resourceGroupName: rg.name,
             location: rg.location,
             sku: "Basic",
+            tags: {
+                Environment: "dev",
+            },
         });
 
         const storageAccount = new StorageAccount(this, "storage", {
@@ -50,6 +56,9 @@ class MyStack extends TerraformStack {
                 indexDocument: "index.html",
                 error404Document: "index.html",
             },
+            tags: {
+                Environment: "dev",
+            },
         });
 
         const cdnProfile = new CdnProfile(this, "cdnProfile", {
@@ -57,6 +66,9 @@ class MyStack extends TerraformStack {
             location: rg.location,
             resourceGroupName: rg.name,
             sku: "Standard_Microsoft",
+            tags: {
+                Environment: "dev",
+            },
         });
 
         const cdnEndpoint = new CdnEndpoint(this, "cdnEndpoint", {
@@ -64,9 +76,12 @@ class MyStack extends TerraformStack {
             profileName: cdnProfile.name,
             location: rg.location,
             resourceGroupName: rg.name,
-            origin: {
+            origin: [{
                 name: "recipebox-origin",
                 hostName: storageAccount.primaryWebHost,
+            }],
+            tags: {
+                Environment: "dev",
             },
         });
 
@@ -80,6 +95,9 @@ class MyStack extends TerraformStack {
             administratorLogin: "pgadmin",
             administratorPassword: pgPassword,
             zone: "1",
+            tags: {
+                Environment: "dev",
+            },
         });
 
         new PostgresqlFlexibleServerDatabase(this, "pgDb", {
@@ -100,6 +118,10 @@ class MyStack extends TerraformStack {
             identity: {
                 type: "SystemAssigned",
             },
+            roleBasedAccessControlEnabled: true,
+            tags: {
+                Environment: "dev",
+            },
         });
 
         new RoleAssignment(this, "acrPull", {
@@ -110,19 +132,19 @@ class MyStack extends TerraformStack {
 
         // Kubernetes provider
         new KubernetesProvider(this, "k8s", {
-            host: aks.host,
-            clientCertificate: aks.clientCertificate,
-            clientKey: aks.clientKey,
-            clusterCaCertificate: aks.clusterCaCertificate,
+            host: aks.kubeConfig.get(0).host,
+            clientCertificate: aks.kubeConfig.get(0).clientCertificate,
+            clientKey: aks.kubeConfig.get(0).clientKey,
+            clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
         });
 
         // Helm provider
         new HelmProvider(this, "helm", {
             kubernetes: {
-                host: aks.host,
-                clientCertificate: aks.clientCertificate,
-                clientKey: aks.clientKey,
-                clusterCaCertificate: aks.clusterCaCertificate,
+                host: aks.kubeConfig.get(0).host,
+                clientCertificate: aks.kubeConfig.get(0).clientCertificate,
+                clientKey: aks.kubeConfig.get(0).clientKey,
+                clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
             },
         });
 
@@ -193,7 +215,7 @@ class MyStack extends TerraformStack {
         });
 
         new TerraformOutput(this, "cdn_endpoint", {
-            value: cdnEndpoint.hostName,
+            value: cdnEndpoint.fqdn,
         });
     }
 }
