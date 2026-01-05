@@ -7,6 +7,7 @@ echo "Running Policy as Code tests..."
 # Generate CDKTF infrastructure JSON
 echo "Synthesizing CDKTF infrastructure..."
 cd infra
+cdktf get
 cdktf synth
 cd ..
 
