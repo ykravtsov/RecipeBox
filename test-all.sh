@@ -8,7 +8,7 @@ echo "Running Policy as Code tests..."
 echo "Synthesizing CDKTF infrastructure..."
 cd infra
 cdktf get
-cdktf synth
+NODE_OPTIONS="--max-old-space-size=4096" cdktf synth
 cd ..
 
 # Test CDKTF infrastructure with Rego policies
