@@ -68,7 +68,7 @@ jobs:
       - name: Install infrastructure dependencies
         run: |
           cd infra
-          npm install --legacy-peer-deps
+          npm install
 
       - name: Run Policy as Code tests
         run: ./test-all.sh
