@@ -13,7 +13,7 @@ cd ..
 
 # Test CDKTF infrastructure with Rego policies
 echo "Testing CDKTF infrastructure policies..."
-conftest test cdktf.out/stacks/*/cdk.tf.json -p policy/terraform.rego
+conftest test cdktf.out/stacks/recipebox-infra/cdk.tf.json -p policy/terraform.rego
 
 # Test ArgoCD Application manifests with Rego policies
 echo "Testing ArgoCD Application policies..."
