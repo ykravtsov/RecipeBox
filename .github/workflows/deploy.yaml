@@ -48,7 +48,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cdktf-out
-          path: infra/cdktf.out/
+          path: infra/
       - name: Install Conftest
         run: |
           wget -O conftest.tar.gz https://github.com/open-policy-agent/conftest/releases/download/v0.48.0/conftest_0.48.0_Linux_x86_64.tar.gz
@@ -56,7 +56,7 @@ jobs:
           sudo mv conftest /usr/local/bin/
       - name: Run infrastructure policy checks
         run: |
-          conftest test infra/cdktf.out/stacks/recipebox-infra/cdk.tf.json -p policy/terraform.rego
+          conftest test infra/cdktf.out/stacks/recipebox-infra/ -p policy/terraform.rego
       - name: Run ArgoCD policy checks
         run: |
           conftest test k8s/ -p policy/argocd.rego
@@ -85,7 +85,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cdktf-out
-          path: infra/cdktf.out/
+          path: infra/
       - name: Install Terraform
         run: |
           wget -O terraform.zip https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
