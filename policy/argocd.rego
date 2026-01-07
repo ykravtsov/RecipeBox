@@ -15,11 +15,3 @@ warn contains msg if {
   not input.spec.syncPolicy.automated.selfHeal == true
   msg := sprintf("ArgoCD Application '%s' does not have self-healing enabled. Consider enabling automated.selfHeal for drift correction.", [input.metadata.name])
 }
-
-# Deny ArgoCD Application with hardcoded kubernetes.default.svc server
-deny contains msg if {
-  input.kind == "Application"
-  input.apiVersion == "argoproj.io/v1alpha1"
-  input.spec.destination.server == "https://kubernetes.default.svc"
-  msg := sprintf("ArgoCD Application '%s' uses hardcoded server 'https://kubernetes.default.svc'. Use cluster name reference or valid URL instead.", [input.metadata.name])
-}

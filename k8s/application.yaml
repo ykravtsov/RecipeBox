@@ -4,7 +4,7 @@ metadata:
   name: recipebox
   namespace: argocd
 spec:
-  project: default
+  project: recipebox
   source:
     repoURL: https://github.com/ykravtsov/RecipeBox
     targetRevision: HEAD
