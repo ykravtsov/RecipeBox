@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 # Install basic tools
 RUN apt-get update && apt-get install -y \
@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
-# Install CDKTF CLI
-RUN npm install -g cdktf-cli
+# Install CDKTF CLI (matching project version)
+RUN npm install -g cdktf-cli@0.20.0
 
 # Install Terraform
 RUN wget -O terraform.zip https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip && \
@@ -27,8 +27,11 @@ RUN wget -O conftest.tar.gz https://github.com/open-policy-agent/conftest/releas
     mv conftest /usr/local/bin/ && \
     rm conftest.tar.gz
 
+# Install Helm
+RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
 # Set Node.js memory limit
-ENV NODE_OPTIONS="--max-old-space-size=8192"
+ENV NODE_OPTIONS="--max-old-space-size=6144"
 
 # Set working directory
 WORKDIR /app
