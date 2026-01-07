@@ -33,13 +33,6 @@ RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | b
 # Set Node.js memory limit
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 
-# Create swap space
-RUN fallocate -l 8G /swapfile && \
-    chmod 600 /swapfile && \
-    mkswap /swapfile && \
-    swapon /swapfile && \
-    echo '/swapfile none swap sw 0 0' >> /etc/fstab
-
 # Set working directory
 WORKDIR /app
 
