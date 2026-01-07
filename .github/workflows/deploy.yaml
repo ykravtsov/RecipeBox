@@ -29,7 +29,7 @@ jobs:
           swap-size-gb: 8
       - name: Synthesize infrastructure
         env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
+          NODE_OPTIONS: "--max-old-space-size=8192"
         run: |
           cd infra
           cdktf synth
