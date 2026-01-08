@@ -42,5 +42,17 @@ COPY . .
 # Install infrastructure dependencies
 RUN cd infra && npm install --legacy-peer-deps
 
-# Run the test script
-CMD ["./test-all.sh"]
+# Build infrastructure
+RUN cd infra && cdktf get && cdktf synth
+
+# Test CDKTF infrastructure policies
+RUN conftest test infra/cdktf.out/stacks/recipebox-infra/ -p policy/terraform.rego
+
+# Test ArgoCD Application policies
+RUN helm template recipebox k8s/ | conftest test -p policy/argocd.rego -
+
+# Run Helm chart tests
+RUN helm lint k8s/
+
+# Default command
+CMD ["echo", "All tests passed!"]

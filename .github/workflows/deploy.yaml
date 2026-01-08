@@ -32,6 +32,7 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=8192"
         run: |
           cd infra
+          cdktf get
           cdktf synth
       - name: Upload infrastructure artifact
         uses: actions/upload-artifact@v4
@@ -59,7 +60,7 @@ jobs:
           conftest test infra/cdktf.out/stacks/recipebox-infra/ -p policy/terraform.rego
       - name: Run ArgoCD policy checks
         run: |
-          conftest test k8s/ -p policy/argocd.rego
+          helm template recipebox k8s/ | conftest test -p policy/argocd.rego -
       - name: Run Helm chart tests
         run: |
           helm lint k8s/
