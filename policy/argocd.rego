@@ -1,7 +1,7 @@
 package main
 
 # Deny ArgoCD Application using default project
-deny contains msg if {
+deny[msg] {
   input.kind == "Application"
   input.apiVersion == "argoproj.io/v1alpha1"
   input.spec.project == "default"
@@ -9,7 +9,7 @@ deny contains msg if {
 }
 
 # Warn if ArgoCD Application does not have self-healing enabled
-warn contains msg if {
+warn[msg] {
   input.kind == "Application"
   input.apiVersion == "argoproj.io/v1alpha1"
   not input.spec.syncPolicy.automated.selfHeal == true
