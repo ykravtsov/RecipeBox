@@ -11,8 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check for infra changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            infra:
+              - 'infra/**'
+
       # 1. Install Terraform CLI (CRITICAL FIX)
       - name: Setup Terraform
+        if: steps.filter.outputs.infra == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0" # Match this to the version required by your stack
@@ -20,34 +29,48 @@ jobs:
 
       # 2. Setup Node.js
       - name: Setup Node
+        if: steps.filter.outputs.infra == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       # 3. Install Dependencies (Fixes npm issues)
       - name: Install Dependencies
+        if: steps.filter.outputs.infra == 'true'
         run: |
           cd infra
           npm ci
 
       # 4. Generate CDKTF Constructs (If needed)
       - name: Generate CDKTF
+        if: steps.filter.outputs.infra == 'true'
         run: |
           cd infra
           npx cdktf-cli get
 
       # 5. Synthesize Infrastructure
       - name: Synthesize
+        if: steps.filter.outputs.infra == 'true'
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
         run: |
           cd infra
           npx cdktf-cli synth
       - name: Upload infrastructure artifact
+        if: steps.filter.outputs.infra == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: cdktf-out
           path: infra/cdktf.out/
+      - name: Download previous artifact
+        if: steps.filter.outputs.infra != 'true'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: deploy.yaml
+          name: cdktf-out
+          path: infra/cdktf.out/
+          branch: main
+          workflow_conclusion: success
   test-infra:
     needs: build-infra
     runs-on: ubuntu-latest
