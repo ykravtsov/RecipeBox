@@ -106,6 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
       id-token: write # Required for Azure OIDC login if you use it later
     steps:
       - name: Checkout code
