@@ -16,6 +16,8 @@ import { StorageAccount } from "@cdktf/provider-azurerm/lib/storage-account";
 import { CdnProfile } from "@cdktf/provider-azurerm/lib/cdn-profile";
 import { CdnEndpoint } from "@cdktf/provider-azurerm/lib/cdn-endpoint";
 
+// Force initial build trigger
+
 class MyStack extends TerraformStack {
     constructor(scope: Construct, id: string) {
         super(scope, id);
