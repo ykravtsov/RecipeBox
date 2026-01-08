@@ -13,7 +13,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
 # Install CDKTF CLI (matching project version)
-RUN npm install -g cdktf-cli@0.20.0
+RUN npm install -g cdktf-cli@0.20.10
 
 # Install Terraform
 RUN wget -O terraform.zip https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip && \
