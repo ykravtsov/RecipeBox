@@ -22,8 +22,8 @@
     "@cdktf/provider-azurerm": "^14.23.1",
     "@cdktf/provider-helm": "^10.0.0",
     "@cdktf/provider-kubernetes": "^12.1.1",
-    "cdktf": "^0.21.0",
-    "cdktf-cli": "^0.21.0",
+    "cdktf": "^0.20.10",
+    "cdktf-cli": "^0.20.10",
     "constructs": "^10.0.0"
   },
   "devDependencies": {
