@@ -116,6 +116,9 @@ class MyStack extends TerraformStack {
                 name: "default",
                 nodeCount: 1,
                 vmSize: "Standard_DS2_v2",
+                tags: {
+                    Environment: "Development",
+                },
             },
             identity: {
                 type: "SystemAssigned",
