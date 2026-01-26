@@ -14,6 +14,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Text.Encodings.Web;
 using Xunit;
+using Moq;
+using api.Services;
+using Microsoft.AspNetCore.TestHost;
 
 namespace api.Tests;
 
@@ -142,6 +145,56 @@ public class RecipesControllerTests : IClassFixture<RecipesWebApplicationFactory
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_ScrapeRecipe_ReturnsRecipe_WhenUrlIsValid()
+    {
+        // Arrange
+        var mockScraper = new Mock<IRecipeScraperService>();
+        mockScraper.Setup(s => s.ScrapeRecipeAsync(It.IsAny<string>())).ReturnsAsync(new ScrapedRecipeData
+        {
+            Title = "Test Recipe",
+            Description = "Test Description",
+            Ingredients = new List<IngredientData> { new IngredientData { Name = "Test Ingredient", Quantity = 1, Unit = "cup" } },
+            Steps = new List<string> { "Step 1", "Step 2" },
+            ImageUrls = new List<string>()
+        });
+        var mockFileStorage = new Mock<IFileStorageService>();
+
+        var client = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "TestScheme";
+                    options.DefaultChallengeScheme = "TestScheme";
+                })
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("TestScheme", o => { });
+            });
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(mockScraper.Object);
+                services.AddSingleton(mockFileStorage.Object);
+            });
+        }).CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("TestScheme");
+
+        var scrapeRequest = new { Url = "https://example.com/recipe" };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/recipes/scrape-recipe", scrapeRequest);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var recipe = await response.Content.ReadFromJsonAsync<Recipe>();
+        Assert.NotNull(recipe);
+        Assert.Equal("Test Recipe", recipe.Title);
+        Assert.Equal("Test Description", recipe.Description);
+        Assert.Single(recipe.Ingredients);
+        Assert.Equal("Test Ingredient", recipe.Ingredients.First().Name);
+        Assert.Equal(2, recipe.Steps.Count);
     }
 }
 

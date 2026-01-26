@@ -14,7 +14,9 @@ public class Recipe
 
     public string ImageUrl { get; set; } = string.Empty;
 
-    [Required]
+    public List<string> ImageUrls { get; set; } = new();
+
+    [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
 
     public List<Ingredient> Ingredients { get; set; } = new();

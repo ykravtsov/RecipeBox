@@ -41,16 +41,11 @@
     <div class="image-selection">
       <div
         class="image-option"
-        *ngFor="
-          let imageUrl of ['placeholder1', 'placeholder2', 'placeholder3']
-        "
+        *ngFor="let imageUrl of scrapedRecipe?.imageUrls || []"
         [class.selected]="selectedImageUrl === imageUrl"
         (click)="selectImage(imageUrl)"
       >
-        <img
-          [src]="'https://via.placeholder.com/100x100?text=' + imageUrl"
-          [alt]="imageUrl"
-        />
+        <img [src]="imageUrl" alt="Recipe image option" />
       </div>
     </div>
   </div>
@@ -63,6 +58,6 @@
     (click)="saveRecipe()"
     [disabled]="!scrapedRecipe"
   >
-    Save Recipe
+    Use This Recipe
   </button>
 </mat-dialog-actions>

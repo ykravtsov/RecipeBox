@@ -1,27 +1,108 @@
-# Frontend
+# RecipeBox Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+The Angular frontend for the RecipeBox recipe management application.
 
-## Development server
+## Features
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- **Recipe Management**: View, add, edit, and delete recipes
+- **Recipe Import**: Import recipes from URLs with AI-powered parsing
+- **User Authentication**: Login and registration forms
+- **Responsive Design**: Mobile-first design with Angular Material
+- **Image Upload**: Upload and display recipe images
+- **Recipe Search**: Search and filter recipes
 
-## Code scaffolding
+## Technology Stack
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- **Angular 17**: Modern web framework
+- **TypeScript**: Type-safe JavaScript
+- **Angular Material**: UI component library
+- **RxJS**: Reactive programming
+- **Angular CLI**: Development tooling
 
-## Build
+## Development
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### Prerequisites
 
-## Running unit tests
+- Node.js 18+
+- Angular CLI 17+
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Getting Started
 
-## Running end-to-end tests
+1. **Install dependencies**
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+   ```bash
+   npm install
+   ```
 
-## Further help
+2. **Start development server**
+   ```bash
+   ng serve
+   ```
+   Navigate to `http://localhost:4200/`. The app will automatically reload if you change any source files.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+### Build
+
+```bash
+# Development build
+ng build
+
+# Production build
+ng build --configuration production
+```
+
+The build artifacts will be stored in the `dist/` directory.
+
+### Testing
+
+```bash
+# Unit tests
+ng test
+
+# End-to-end tests (requires API to be running)
+ng e2e
+```
+
+### Code Scaffolding
+
+Run `ng generate component component-name` to generate a new component. You can also use:
+
+- `ng generate directive|pipe|service|class|guard|interface|enum|module`
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── auth/                 # Authentication components
+│   ├── recipes-list/         # Recipe listing component
+│   ├── recipe-detail/        # Recipe detail view
+│   ├── recipe-add/           # Add new recipe form
+│   ├── import-recipe-dialog/ # Recipe import dialog
+│   ├── services/             # Angular services
+│   └── models/               # TypeScript interfaces
+├── assets/                   # Static assets
+└── styles.scss               # Global styles
+```
+
+## API Integration
+
+The frontend communicates with the RecipeBox API for:
+
+- User authentication
+- Recipe CRUD operations
+- Image upload handling
+
+Make sure the API is running on the configured endpoint (default: `http://localhost:5000`).
+
+## Contributing
+
+1. Follow Angular style guide
+2. Write unit tests for new components
+3. Use TypeScript interfaces for data models
+4. Keep components modular and reusable
+
+## Further Help
+
+- [Angular CLI Documentation](https://angular.io/cli)
+- [Angular Material Documentation](https://material.angular.io/)
+- [RecipeBox API Documentation](../api/README.md)

@@ -15,6 +15,8 @@ public class LocalFileStorageService : IFileStorageService
         _baseUrl = configuration.GetValue<string>("FileStorage:BaseUrl") ?? "http://localhost:8080/uploads";
         _httpClient = httpClient;
 
+        Console.WriteLine($"FileStorage BaseUrl: {_baseUrl}");
+
         // Ensure directory exists
         Directory.CreateDirectory(_basePath);
     }

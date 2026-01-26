@@ -5,8 +5,7 @@ COPY ["api.csproj", "."]
 RUN dotnet nuget locals all --clear
 RUN dotnet restore
 COPY . .
-RUN dotnet build -c Release --no-restore
-RUN dotnet publish -c Release -o /app/publish --no-build
+RUN dotnet publish -c Release -o /app/publish
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime

@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace api.Services;
 
@@ -7,23 +8,24 @@ public class LlmRecipeParserService
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
+    private readonly ILogger<LlmRecipeParserService> _logger;
 
-    public LlmRecipeParserService(HttpClient httpClient, IConfiguration configuration)
+    public LlmRecipeParserService(HttpClient httpClient, IConfiguration configuration, ILogger<LlmRecipeParserService> logger)
     {
         _httpClient = httpClient;
         _apiKey = configuration["Grok:ApiKey"] ?? throw new InvalidOperationException("Grok API key not configured");
+        _logger = logger;
     }
 
-    public async Task<ScrapedRecipeData> ParseRecipeFromHtmlAsync(string html, string url)
+    public async Task<ScrapedRecipeData> ParseRecipeFromHtmlAsync(string html)
     {
-        var prompt = $@"You are a recipe extraction expert. Given the HTML content of a recipe webpage, extract the recipe information and return it as JSON.
-
-URL: {url}
+        _logger.LogInformation("ParseRecipeFromHtmlAsync called with HTML length: {Length}", html.Length);
+        var prompt = $@"You are a recipe extraction expert. Extract the recipe information from the following HTML content and return it as JSON.
 
 HTML Content:
 {html}
 
-Please extract the following information and return it as a JSON object with this exact structure:
+Please extract the following information from the recipe HTML and return it as a JSON object with this exact structure:
 {{
     ""title"": ""Recipe title"",
     ""description"": ""Brief description of the recipe"",
@@ -34,22 +36,26 @@ Please extract the following information and return it as a JSON object with thi
             ""unit"": ""cups""
         }}
     ],
-    ""steps"": [""Step 1"", ""Step 2"", ""Step 3""],
-    ""imageUrls"": [""https://example.com/image1.jpg"", ""https://example.com/image2.jpg""]
+    ""steps"": [""Step 1"", ""Step 2"", ""Step 3""]
 }}
 
 Rules:
 - For ingredients, try to parse quantity and unit. If you can't determine quantity/unit, use quantity: 1 and unit: ""piece""
-- Only include relevant recipe images (food photos, not ads or logos)
 - If any field cannot be found, use appropriate defaults or empty arrays
 - Make sure the JSON is valid and properly formatted
 
 Return only the JSON object, no additional text or explanation.";
+        _logger.LogInformation("Sending request to Grok API for HTML parsing");
 
         var requestBody = new
         {
             messages = new[]
             {
+                new
+                {
+                    role = "system",
+                    content = "You are a recipe parser. Output strictly valid JSON. No markdown. No conversational text."
+                },
                 new
                 {
                     role = "user",
@@ -58,7 +64,8 @@ Return only the JSON object, no additional text or explanation.";
             },
             model = "grok-4-1-fast-reasoning",
             stream = false,
-            temperature = 0.1
+            temperature = 0.1,
+            response_format = new { type = "json_object" }
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.x.ai/v1/chat/completions")
@@ -71,21 +78,25 @@ Return only the JSON object, no additional text or explanation.";
         try
         {
             var response = await _httpClient.SendAsync(request);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Grok API response status: {Status}, content length: {Length}", response.StatusCode, responseContent.Length);
+            _logger.LogInformation("Full Grok API response: {Response}", responseContent);
             response.EnsureSuccessStatusCode();
 
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var grokResponse = JsonSerializer.Deserialize<GrokResponse>(responseContent);
-
+            // Parse as GrokResponse
+            var grokResponse = JsonSerializer.Deserialize<GrokResponse>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var jsonText = grokResponse?.Choices?[0]?.Message?.Content ?? "{}";
+            _logger.LogInformation("Raw LLM response JSON length: {Length}", jsonText.Length);
+            jsonText = CleanJsonString(jsonText);
+            string rawResponse = jsonText;
+            _logger.LogInformation("Deserializing jsonText to JsonRecipeData");
+            var jsonData = JsonSerializer.Deserialize<JsonRecipeData>(jsonText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            _logger.LogInformation("Deserialization succeeded, jsonData.Title: {Title}", jsonData?.Title);
+            _logger.LogInformation("Deserialized JSON data: Title='{Title}', Description='{Description}', IngredientsCount={IngredientsCount}, StepsCount={StepsCount}", jsonData?.Title, jsonData?.Description, jsonData?.Ingredients?.Count, jsonData?.Steps?.Count);
 
-            var jsonData = JsonSerializer.Deserialize<JsonRecipeData>(jsonText, new JsonSerializerOptions
+            var result = new ScrapedRecipeData
             {
-                PropertyNameCaseInsensitive = true
-            });
-
-            return new ScrapedRecipeData
-            {
-                Title = jsonData?.Title ?? "Scraped Recipe",
+                Title = jsonData?.Title ?? "Fallback Recipe",
                 Description = jsonData?.Description ?? "Recipe imported from website",
                 Ingredients = jsonData?.Ingredients?.Select(i => new IngredientData
                 {
@@ -94,21 +105,28 @@ Return only the JSON object, no additional text or explanation.";
                     Unit = i.Unit ?? "piece"
                 }).ToList() ?? new List<IngredientData>(),
                 Steps = jsonData?.Steps ?? new List<string>(),
-                ImageUrls = jsonData?.ImageUrls ?? new List<string>()
+                ImageUrls = new List<string>(), // Will be set separately
+                RawResponse = rawResponse
             };
+            _logger.LogInformation("Returning ScrapedRecipeData with Title: {Title}", result.Title);
+            return result;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Fallback if API call or JSON parsing fails
-            return new ScrapedRecipeData
-            {
-                Title = "Scraped Recipe",
-                Description = "Recipe imported from website",
-                Ingredients = new List<IngredientData>(),
-                Steps = new List<string>(),
-                ImageUrls = new List<string>()
-            };
+            _logger.LogError(ex, "Failed to parse recipe from HTML using LLM API");
+            throw new Exception("Failed to parse recipe from HTML", ex);
         }
+    }
+
+    private static string CleanJsonString(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+        // Remove markdown wrappers
+        var cleaned = raw.Replace("```json", "").Replace("```", "").Trim();
+        // Extract logic between the first and last brace
+        int first = cleaned.IndexOf('{');
+        int last = cleaned.LastIndexOf('}');
+        return (first >= 0 && last > first) ? cleaned.Substring(first, last - first + 1) : cleaned;
     }
 
     private class JsonRecipeData
@@ -117,7 +135,6 @@ Return only the JSON object, no additional text or explanation.";
         public string? Description { get; set; }
         public List<JsonIngredientData>? Ingredients { get; set; }
         public List<string>? Steps { get; set; }
-        public List<string>? ImageUrls { get; set; }
     }
 
     private class JsonIngredientData
