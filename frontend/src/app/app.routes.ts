@@ -4,14 +4,16 @@ import { RecipeDetailComponent } from './recipe-detail/recipe-detail.component';
 import { RecipeAddComponent } from './recipe-add/recipe-add.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { LoginComponent } from './auth/login/login.component';
+import { WelcomeComponent } from './welcome/welcome.component';
 import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
     { path: 'register', component: RegisterComponent },
-    { path: '', component: RecipesListComponent, canActivate: [authGuard] },
-    { path: 'add', component: RecipeAddComponent, canActivate: [authGuard] },
-    { path: 'recipe/:id', component: RecipeDetailComponent, canActivate: [authGuard] },
-    { path: 'recipe/:id/edit', component: RecipeDetailComponent, canActivate: [authGuard] },
+    { path: '', component: WelcomeComponent },
+    { path: 'recipes', component: RecipesListComponent, canActivate: [authGuard] },
+    { path: 'recipes/add', component: RecipeAddComponent, canActivate: [authGuard] },
+    { path: 'recipes/recipe/:id', component: RecipeDetailComponent, canActivate: [authGuard] },
+    { path: 'recipes/recipe/:id/edit', component: RecipeDetailComponent, canActivate: [authGuard] },
     { path: '**', redirectTo: '' }
 ];

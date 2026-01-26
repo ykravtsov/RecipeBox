@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 EXPOSE 4200
-CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--configuration", "hmr", "--disable-host-check"]
+CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--configuration", "hmr"]
 
 # Build stage
 FROM node:18 AS build

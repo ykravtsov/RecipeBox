@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { RecipeService } from '../services/recipe.service';
 import { Recipe } from '../models/recipe';
 
@@ -34,7 +35,8 @@ export class ImportRecipeDialogComponent {
 
   constructor(
     private dialogRef: MatDialogRef<ImportRecipeDialogComponent>,
-    private recipeService: RecipeService
+    private recipeService: RecipeService,
+    private router: Router
   ) { }
 
   scrapeRecipe(): void {
@@ -60,7 +62,12 @@ export class ImportRecipeDialogComponent {
   saveRecipe(): void {
     if (!this.scrapedRecipe) return;
 
-    this.scrapedRecipe.imageUrl = this.selectedImageUrl;
+    // Set imageUrl if an image was selected
+    if (this.selectedImageUrl) {
+      this.scrapedRecipe.imageUrl = this.selectedImageUrl;
+    }
+
+    // Close dialog and return the scraped recipe data for editing
     this.dialogRef.close(this.scrapedRecipe);
   }
 

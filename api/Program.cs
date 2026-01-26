@@ -63,7 +63,7 @@ builder.Services.AddCors(options =>
 // Register file storage service
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
-builder.Services.AddScoped<RecipeScraperService>();
+builder.Services.AddScoped<IRecipeScraperService, RecipeScraperService>();
 builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddScoped<LlmRecipeParserService>();
 

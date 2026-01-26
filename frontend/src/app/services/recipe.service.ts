@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
     providedIn: 'root'
 })
 export class RecipeService {
-    private apiUrl = 'http://localhost:8080/api/recipes'; // Adjust port if needed
+    private apiUrl = '/api/recipes';
 
     constructor(private http: HttpClient, private authService: AuthService) { }
 

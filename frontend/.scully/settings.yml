@@ -1,0 +1,10 @@
+identifier: m3kcvfncic68ja1b
+appPort: 1864
+staticPort: 1668
+reloadPort: 2667
+hostName: localhost
+projectName: frontend
+homeFolder: /Users/yuriykravtsov/Source/RecipeBox/frontend
+distFolder: dist/frontend
+outDir: /Users/yuriykravtsov/Source/RecipeBox/frontend/dist/static
+handle404: ''

@@ -1,52 +1,153 @@
-# Conftest
+# RecipeBox
 
-[![Go Report Card](https://goreportcard.com/badge/open-policy-agent/opa)](https://goreportcard.com/report/open-policy-agent/conftest) [![Netlify](https://api.netlify.com/api/v1/badges/2d928746-3380-4123-b0eb-1fd74ba390db/deploy-status)](https://app.netlify.com/sites/vibrant-villani-65041c/deploys)
+A modern recipe management application built with ASP.NET Core API, Angular frontend, and deployed on Azure Kubernetes Service.
 
-Conftest helps you write tests against structured configuration data. Using Conftest you can
-write tests for your Kubernetes configuration, Tekton pipeline definitions, Terraform code,
-Serverless configs or any other config files.
+## Features
 
-Conftest uses the Rego language from [Open Policy Agent](https://www.openpolicyagent.org/) for writing
-the assertions. You can read more about Rego in [How do I write policies](https://www.openpolicyagent.org/docs/how-do-i-write-policies.html)
-in the Open Policy Agent documentation.
+- **Recipe Management**: Add, edit, view, and organize your favorite recipes
+- **Import Recipes**: Import recipes from URLs using AI-powered parsing
+- **User Authentication**: Secure user registration and login
+- **Image Upload**: Upload and store recipe images
+- **Responsive Design**: Modern Angular frontend with Material Design
+- **API-First Architecture**: RESTful API with comprehensive documentation
+- **Containerized Deployment**: Docker containers with Kubernetes orchestration
+- **Infrastructure as Code**: Azure infrastructure provisioned with CDK for Terraform
+- **Policy as Code**: OPA policies for infrastructure validation
 
-Here's a quick example. Save the following as `policy/deployment.rego`:
+## Architecture
 
-```rego
-package main
+RecipeBox follows a microservices architecture with the following components:
 
-deny[msg] {
-  input.kind == "Deployment"
-  not input.spec.template.spec.securityContext.runAsNonRoot
+- **API** (`api/`): ASP.NET Core Web API with Entity Framework Core and PostgreSQL
+- **Frontend** (`frontend/`): Angular application with TypeScript
+- **Infrastructure** (`infra/`): CDK for Terraform code for Azure resources
+- **Kubernetes** (`k8s/`): Helm charts for deployment
+- **E2E Tests** (`e2e/`): Playwright with Cucumber for end-to-end testing
+- **Policy** (`policy/`): Open Policy Agent policies for infrastructure validation
 
-  msg := "Containers must not run as root"
-}
+## Prerequisites
 
-deny[msg] {
-  input.kind == "Deployment"
-  not input.spec.selector.matchLabels.app
+- .NET 8 SDK
+- Node.js 18+
+- Angular CLI 17+
+- Docker & Docker Compose
+- Azure CLI (for infrastructure deployment)
+- kubectl (for Kubernetes operations)
 
-  msg := "Containers must provide app label for pod selectors"
-}
+## Getting Started
+
+### Local Development
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd RecipeBox
+   ```
+
+2. **Start the database**
+
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Setup the API**
+
+   ```bash
+   cd api
+   dotnet restore
+   dotnet ef database update
+   dotnet run
+   ```
+
+4. **Setup the Frontend**
+
+   ```bash
+   cd ../frontend
+   npm install
+   ng serve
+   ```
+
+5. **Access the application**
+   - Frontend: http://localhost:4200
+   - API: http://localhost:5000
+
+### Running Tests
+
+```bash
+# API Tests
+cd api
+dotnet test
+
+# Frontend Tests
+cd frontend
+ng test
+
+# E2E Tests
+cd e2e
+npm install
+npm run test
 ```
 
-Assuming you have a Kubernetes deployment in `deployment.yaml` you can run Conftest like so:
+### Docker Development
 
-```console
-$ conftest test deployment.yaml
-FAIL - deployment.yaml - Containers must not run as root
-FAIL - deployment.yaml - Containers must provide app label for pod selectors
-
-2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions
+```bash
+# Build and run all services
+docker-compose up --build
 ```
 
-Conftest isn't specific to Kubernetes. It will happily let you write tests for any configuration files in a variety of different formats. See the [documentation](https://www.conftest.dev/) for [installation instructions](https://www.conftest.dev/install/) and
-more details about the features.
+## Deployment
 
-## Want to contribute to Conftest?
+### Infrastructure Setup
 
-* See [DEVELOPMENT.md](DEVELOPMENT.md) to build and test Conftest itself.
-* See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+1. **Navigate to infrastructure directory**
 
-For discussions and questions join us on the [Open Policy Agent Slack](https://slack.openpolicyagent.org/)
-in the `#opa-conftest` channel.
+   ```bash
+   cd infra
+   npm install
+   ```
+
+2. **Authenticate with Azure**
+
+   ```bash
+   az login
+   ```
+
+3. **Deploy infrastructure**
+   ```bash
+   cdktf deploy
+   ```
+
+### Kubernetes Deployment
+
+1. **Connect to AKS cluster**
+
+   ```bash
+   az aks get-credentials --resource-group rg-recipebox --name recipebox-aks
+   ```
+
+2. **Deploy with Helm**
+   ```bash
+   helm install recipebox ./k8s
+   ```
+
+## API Documentation
+
+The API provides RESTful endpoints for:
+
+- User authentication (`/api/auth`)
+- Recipe management (`/api/recipes`)
+
+API documentation is available via Swagger at `/swagger` when running locally.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and ensure they pass
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
