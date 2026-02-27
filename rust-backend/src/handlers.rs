@@ -1,4 +1,4 @@
-use axum::{extract::{Path, State}, http::StatusCode, Json};
+use axum::{extract::{Path, State, Query}, http::StatusCode, Json};
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 use bcrypt::{hash, verify, DEFAULT_COST};
@@ -14,7 +14,12 @@ use crate::entities::{self, Ingredient};
 pub struct CreateRecipe {
     pub title: String,
     pub ingredients: Vec<Ingredient>,
-    pub instructions: String,
+    pub steps: Vec<String>,
+    pub description: Option<String>,
+    pub image_url: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub prep_time: Option<i32>,
+    pub cook_time: Option<i32>,
 }
 
 #[derive(serde::Serialize)]
@@ -23,7 +28,12 @@ pub struct RecipeResponse {
     pub user_id: Uuid,
     pub title: String,
     pub ingredients: Vec<Ingredient>,
-    pub instructions: String,
+    pub steps: Vec<String>,
+    pub description: Option<String>,
+    pub image_url: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub prep_time: Option<i32>,
+    pub cook_time: Option<i32>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -39,12 +49,21 @@ pub async fn get_recipes(
     let responses: Vec<RecipeResponse> = recipes.into_iter().map(|model| -> Result<RecipeResponse, sea_orm::DbErr> {
         let ingredients: Vec<Ingredient> = serde_json::from_value(model.ingredients)
             .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+        let steps: Vec<String> = serde_json::from_value(model.steps)
+            .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+        let tags: Option<Vec<String>> = model.tags.map(|t| serde_json::from_value::<Vec<String>>(t)
+            .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))).transpose()?;
         Ok(RecipeResponse {
             id: model.id,
             user_id: model.user_id,
             title: model.title,
             ingredients,
-            instructions: model.instructions,
+            steps,
+            description: model.description,
+            image_url: model.image_url,
+            tags,
+            prep_time: model.prep_time,
+            cook_time: model.cook_time,
             created_at: model.created_at,
         })
     }).collect::<Result<Vec<_>, _>>()?;
@@ -59,22 +78,41 @@ pub async fn create_recipe(
     let user_id = Uuid::parse_str(&claims.sub)?;
     let ingredients_value = serde_json::to_value(&payload.ingredients)
         .map_err(|_| sea_orm::DbErr::Custom("Serialization error".to_string()))?;
+    let steps_value = serde_json::to_value(&payload.steps)
+        .map_err(|_| sea_orm::DbErr::Custom("Serialization error".to_string()))?;
+    let tags_value = payload.tags.as_ref().map(|t| serde_json::to_value(t))
+        .transpose()
+        .map_err(|_| sea_orm::DbErr::Custom("Serialization error".to_string()))?;
     let recipe = entities::ActiveModel {
         user_id: Set(user_id),
         title: Set(payload.title),
         ingredients: Set(ingredients_value),
-        instructions: Set(payload.instructions),
+        steps: Set(steps_value),
+        description: Set(payload.description),
+        image_url: Set(payload.image_url),
+        tags: Set(tags_value),
+        prep_time: Set(payload.prep_time),
+        cook_time: Set(payload.cook_time),
         ..Default::default()
     };
     let inserted = recipe.insert(&db).await?;
     let ingredients: Vec<Ingredient> = serde_json::from_value(inserted.ingredients)
         .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+    let steps: Vec<String> = serde_json::from_value(inserted.steps)
+        .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+    let tags: Option<Vec<String>> = inserted.tags.map(|t| serde_json::from_value::<Vec<String>>(t)
+        .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))).transpose()?;
     Ok(Json(RecipeResponse {
         id: inserted.id,
         user_id: inserted.user_id,
         title: inserted.title,
         ingredients,
-        instructions: inserted.instructions,
+        steps,
+        description: inserted.description,
+        image_url: inserted.image_url,
+        tags,
+        prep_time: inserted.prep_time,
+        cook_time: inserted.cook_time,
         created_at: inserted.created_at,
     }))
 }
@@ -93,20 +131,109 @@ pub async fn update_recipe(
     let mut recipe: entities::ActiveModel = recipe_model.into();
     let ingredients_value = serde_json::to_value(&payload.ingredients)
         .map_err(|_| sea_orm::DbErr::Custom("Serialization error".to_string()))?;
+    let steps_value = serde_json::to_value(&payload.steps)
+        .map_err(|_| sea_orm::DbErr::Custom("Serialization error".to_string()))?;
+    let tags_value = payload.tags.as_ref().map(|t| serde_json::to_value(t))
+        .transpose()
+        .map_err(|_| sea_orm::DbErr::Custom("Serialization error".to_string()))?;
     recipe.title = Set(payload.title);
     recipe.ingredients = Set(ingredients_value);
-    recipe.instructions = Set(payload.instructions);
+    recipe.steps = Set(steps_value);
+    recipe.description = Set(payload.description);
+    recipe.image_url = Set(payload.image_url);
+    recipe.tags = Set(tags_value);
+    recipe.prep_time = Set(payload.prep_time);
+    recipe.cook_time = Set(payload.cook_time);
     let updated = recipe.update(&db).await?;
     let ingredients: Vec<Ingredient> = serde_json::from_value(updated.ingredients)
         .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+    let steps: Vec<String> = serde_json::from_value(updated.steps)
+        .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+    let tags: Option<Vec<String>> = updated.tags.map(|t| serde_json::from_value::<Vec<String>>(t)
+        .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))).transpose()?;
     Ok(Json(RecipeResponse {
         id: updated.id,
         user_id: updated.user_id,
         title: updated.title,
         ingredients,
-        instructions: updated.instructions,
+        steps,
+        description: updated.description,
+        image_url: updated.image_url,
+        tags,
+        prep_time: updated.prep_time,
+        cook_time: updated.cook_time,
         created_at: updated.created_at,
     }))
+}
+
+pub async fn search_recipes(
+    claims: Claims,
+    State(db): State<sea_orm::DatabaseConnection>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> Result<Json<Vec<RecipeResponse>>, crate::AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)?;
+    let mut query = entities::Entity::find()
+        .filter(entities::Column::UserId.eq(user_id));
+
+    let tags: Option<Vec<String>> = params.get("tags").map(|s| {
+        s.split(',')
+            .map(|t| t.trim().to_lowercase())
+            .filter(|t| !t.is_empty() && t.len() <= 50)
+            .collect()
+    }).filter(|v| !v.is_empty());
+
+    let ingredients: Option<Vec<String>> = params.get("ingredients").map(|s| {
+        s.split(',')
+            .map(|i| i.trim().to_lowercase())
+            .filter(|i| !i.is_empty() && i.len() <= 50)
+            .collect()
+    }).filter(|v| !v.is_empty());
+
+    let recipes = query.all(&db).await?;
+    let mut responses: Vec<RecipeResponse> = Vec::new();
+
+    for model in recipes {
+        let ingredients: Vec<Ingredient> = serde_json::from_value(model.ingredients.clone())
+            .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+        let steps: Vec<String> = serde_json::from_value(model.steps.clone())
+            .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
+        let tags: Option<Vec<String>> = model.tags.clone().map(|t| serde_json::from_value::<Vec<String>>(t)
+            .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))).transpose()?;
+
+        let mut matches = true;
+
+        if let Some(search_tags) = &tags {
+            if let Some(recipe_tags) = &tags {
+                let recipe_tags_lower: Vec<String> = recipe_tags.iter().map(|t| t.to_lowercase()).collect();
+                matches &= search_tags.iter().any(|st| recipe_tags_lower.contains(st));
+            } else {
+                matches = false;
+            }
+        }
+
+        if let Some(search_ingredients) = &ingredients {
+            let recipe_ingredients_lower: Vec<String> = ingredients.iter().map(|i| i.name.to_lowercase()).collect();
+            matches &= search_ingredients.iter().any(|si| recipe_ingredients_lower.iter().any(|ri| ri.contains(si)));
+        }
+
+        if matches {
+            responses.push(RecipeResponse {
+                id: model.id,
+                user_id: model.user_id,
+                title: model.title,
+                ingredients,
+                steps,
+                description: model.description,
+                image_url: model.image_url,
+                tags,
+                prep_time: model.prep_time,
+                cook_time: model.cook_time,
+                created_at: model.created_at,
+            });
+        }
+    }
+
+    Ok(Json(responses))
 }
 
 pub async fn delete_recipe(
@@ -255,8 +382,8 @@ fn extract_image_urls(html: &str, base_url: &str) -> Vec<String> {
         if let Some(src) = cap.get(1) {
             let src = src.as_str();
             if !src.contains("avatar") && !src.contains("logo") && !src.contains("icon") &&
-               !src.contains("banner") && !src.contains("header") && !src.contains("footer") &&
-               src.len() > 10 && image_extensions.iter().any(|ext| src.to_lowercase().ends_with(ext)) {
+                !src.contains("banner") && !src.contains("header") && !src.contains("footer") &&
+                src.len() > 10 && image_extensions.iter().any(|ext| src.to_lowercase().ends_with(ext)) {
                 if let Some(abs_url) = resolve_url(src, base_url) {
                     urls.push(abs_url);
                 }
@@ -328,7 +455,7 @@ struct ParsedIngredient {
 }
 
 async fn parse_recipe_with_llm(html: &str) -> Result<ParsedRecipe, crate::AppError> {
-    let prompt = format!(r#"
+    let prompt = format!(r###"
 You are a recipe extraction expert. Extract the recipe information from the following HTML content and return it as JSON.
 
 HTML Content:
@@ -354,7 +481,7 @@ Rules:
 - Make sure the JSON is valid and properly formatted
 
 Return only the JSON object, no additional text or explanation.
-"#, html);
+"###, html);
 
     let request_body = LlmRequest {
         messages: vec![

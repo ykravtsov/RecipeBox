@@ -1,25 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "recipebox.fullname" . }}-api
+  name: {{ include "recipebox.fullname" . }}-backend
 spec:
-  replicas: {{ .Values.api.replicaCount }}
+  replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "recipebox.name" . }}-api
+      app: {{ include "recipebox.name" . }}-backend
   template:
     metadata:
       labels:
-        app: {{ include "recipebox.name" . }}-api
+        app: {{ include "recipebox.name" . }}-backend
     spec:
       containers:
-      - name: api
-        image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
-        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+      - name: backend
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
         ports:
-        - containerPort: 8080
+        - containerPort: 3000
         env:
-        - name: ConnectionStrings__DefaultConnection
-          value: "Host=recipebox-pg.postgres.database.azure.com;Database=recipebox;Username=pgadmin;Password=P@ssw0rd123!;SSL Mode=Require;Trust Server Certificate=true"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "recipebox.fullname" . }}-backend-secret
+              key: DATABASE_URL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "recipebox.fullname" . }}-backend-secret
+              key: JWT_SECRET
+        - name: XAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "recipebox.fullname" . }}-backend-secret
+              key: XAI_API_KEY
         resources:
-          {{- toYaml .Values.api.resources | nindent 12 }}
+          {{- toYaml .Values.backend.resources | nindent 12 }}

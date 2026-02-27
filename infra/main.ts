@@ -181,13 +181,13 @@ class MyStack extends TerraformStack {
             },
         });
 
-        // RecipeBox API Application
-        new Manifest(this, "recipebox-api-app", {
+        // RecipeBox Backend Application
+        new Manifest(this, "recipebox-backend-app", {
             manifest: {
                 apiVersion: "argoproj.io/v1alpha1",
                 kind: "Application",
                 metadata: {
-                    name: "recipebox-api",
+                    name: "recipebox-backend",
                     namespace: "argocd",
                 },
                 spec: {
