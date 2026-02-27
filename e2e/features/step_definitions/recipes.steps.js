@@ -18,7 +18,7 @@ Given("I have created a recipe", async function () {
     body: JSON.stringify({
       title: "Test Recipe",
       ingredients: [{ name: "flour", quantity: "1", unit: "cup" }],
-      instructions: "Mix and bake",
+      steps: ["Mix and bake"],
     }),
   });
   console.log("Create recipe response status:", response.status);
@@ -179,4 +179,58 @@ Then("I should see the recipe image", async function () {
   // Check that the recipe image is visible on the detail page
   const recipeImage = this.page.locator(".recipe-image img");
   await expect(recipeImage).toBeVisible();
+});
+
+Given("I have created a recipe with tags {string}", async function (tags) {
+  const token = await this.page.evaluate(() =>
+    localStorage.getItem("authToken"),
+  );
+  const response = await fetch("http://localhost:3000/recipes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      title: "Tagged Test Recipe",
+      ingredients: [{ name: "pasta", quantity: "1", unit: "lb" }],
+      steps: ["Cook pasta"],
+      tags: tags.split(","),
+    }),
+  });
+  console.log("Create tagged recipe response status:", response.status);
+  const responseText = await response.text();
+  console.log("Create tagged recipe response body:", responseText);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to create tagged recipe: ${response.status} ${responseText}`,
+    );
+  }
+});
+
+When(
+  "I enter {string} in the search input and press Enter",
+  async function (searchTerm) {
+    const searchInput = this.page.locator(
+      'input[placeholder="Type and press Enter to add"]',
+    );
+    await searchInput.fill(searchTerm);
+    await searchInput.press("Enter");
+  },
+);
+
+Then(
+  "I should see the recipe with tags {string} in the list",
+  async function (tags) {
+    const recipeCards = this.page.locator(".recipe-card");
+    const taggedRecipe = recipeCards.filter({ hasText: "Tagged Test Recipe" });
+    await expect(taggedRecipe.first()).toBeVisible();
+  },
+);
+
+Then("I should not see other recipes", async function () {
+  const recipeCards = this.page.locator(".recipe-card");
+  const count = await recipeCards.count();
+  // Should only see the tagged recipe, not others
+  expect(count).toBe(1);
 });

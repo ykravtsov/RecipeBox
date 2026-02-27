@@ -37,4 +37,11 @@ Feature: Recipes
         And I should see the imported recipe in the list
         When I click the "View Details" button on the imported recipe
         Then I should be redirected to the recipe detail page
-        And I should see the recipe image
+        And I should see the recipe image-e 
+     Scenario: Search recipes by tags
+         Given I have created a recipe with tags "italian,pasta"
+         Given I am on the recipes page
+         When I enter "italian" in the search input and press Enter
+         And I click the "Search" button
+         Then I should see the recipe with tags "italian,pasta" in the list
+         And I should not see other recipes
