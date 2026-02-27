@@ -131,6 +131,15 @@ impl MigrationName for AddUserIdToRecipesTable {
 #[async_trait::async_trait]
 impl MigrationTrait for AddUserIdToRecipesTable {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        let fk = TableForeignKey::new()
+            .name("fk_recipes_user_id")
+            .from_tbl(Alias::new("recipes"))
+            .from_col(Alias::new("user_id"))
+            .to_tbl(Alias::new("users"))
+            .to_col(Alias::new("id"))
+            .on_delete(ForeignKeyAction::Cascade)
+            .on_update(ForeignKeyAction::Cascade)
+            .to_owned();
         manager
             .alter_table(
                 Table::alter()
@@ -140,6 +149,7 @@ impl MigrationTrait for AddUserIdToRecipesTable {
                             .uuid()
                             .not_null(),
                     )
+                    .add_foreign_key(&fk)
                     .to_owned(),
             )
             .await

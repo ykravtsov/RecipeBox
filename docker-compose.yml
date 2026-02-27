@@ -25,6 +25,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:password@postgres/recipebox
+      JWT_SECRET: ${JWT_SECRET}
+      XAI_API_KEY: ${XAI_API_KEY}
     ports:
       - "3000:3000"
 
