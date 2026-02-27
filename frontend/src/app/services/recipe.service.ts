@@ -43,4 +43,15 @@ export class RecipeService {
     scrapeRecipe(url: string): Observable<Recipe> {
         return this.http.post<Recipe>('/api/scrape-recipe', { url }, { headers: this.getHeaders() });
     }
+
+    searchRecipes(tags?: string[], ingredients?: string[]): Observable<Recipe[]> {
+        const params: any = {};
+        if (tags && tags.length > 0) {
+            params.tags = tags.join(',');
+        }
+        if (ingredients && ingredients.length > 0) {
+            params.ingredients = ingredients.join(',');
+        }
+        return this.http.get<Recipe[]>('/api/recipes/search', { headers: this.getHeaders(), params });
+    }
 }

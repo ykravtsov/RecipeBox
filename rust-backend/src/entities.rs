@@ -16,7 +16,12 @@ pub struct Model {
     pub user_id: Uuid,
     pub title: String,
     pub ingredients: serde_json::Value,
-    pub instructions: String,
+    pub steps: serde_json::Value,
+    pub description: Option<String>,
+    pub image_url: Option<String>,
+    pub tags: Option<serde_json::Value>,
+    pub prep_time: Option<i32>,
+    pub cook_time: Option<i32>,
     pub created_at: DateTimeUtc,
 }
 

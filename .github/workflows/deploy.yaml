@@ -175,20 +175,20 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Run API tests
+      - name: Run Backend tests
         run: |
-          cd api
-          dotnet test --verbosity normal
+          cd rust-backend
+          cargo test
       - name: Setup Node.js for frontend
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-      - name: Build and push API Docker image
+      - name: Build and push Backend Docker image
         run: |
           az acr login --name recipeboxacr
-          cd api
-          docker build -t recipeboxacr.azurecr.io/recipebox-api:${{ github.sha }} .
-          docker push recipeboxacr.azurecr.io/recipebox-api:${{ github.sha }}
+          cd rust-backend
+          docker build -t recipeboxacr.azurecr.io/recipebox-backend:${{ github.sha }} .
+          docker push recipeboxacr.azurecr.io/recipebox-backend:${{ github.sha }}
       - name: Build and deploy Frontend to CDN
         if: steps.changed-files.outputs.frontend_any_changed == 'true'
         run: |
@@ -206,13 +206,13 @@ jobs:
           npx playwright install
           npm run start &
           sleep 10
-          docker-compose -f ../../docker-compose.yml up -d api postgres
+          docker-compose -f ../../docker-compose.yml up -d rust-backend postgres
           sleep 30
           npx playwright test
           docker-compose -f ../../docker-compose.yml down
       - name: Update Helm values
         run: |
-          sed -i "s|recipebox-api:.*|recipebox-api:${{ github.sha }}|" k8s/values.yaml
+          sed -i "s|recipebox-backend:.*|recipebox-backend:${{ github.sha }}|" k8s/values.yaml
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"

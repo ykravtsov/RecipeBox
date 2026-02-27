@@ -72,6 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/auth/login", axum::routing::post(handlers::login))
         .route("/scrape-recipe", axum::routing::post(handlers::scrape_recipe))
         .route("/recipes", get(handlers::get_recipes).post(handlers::create_recipe))
+        .route("/recipes/search", get(handlers::search_recipes))
         .route("/recipes/:id", put(handlers::update_recipe).delete(handlers::delete_recipe))
         .with_state(db)
         .layer(cors);
