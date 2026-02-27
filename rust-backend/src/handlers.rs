@@ -175,19 +175,19 @@ pub async fn search_recipes(
     let mut query = entities::Entity::find()
         .filter(entities::Column::UserId.eq(user_id));
 
-    let tags: Option<Vec<String>> = params.get("tags").map(|s| {
+    let tags: Option<Vec<String>> = params.get("tags").map(|s: &String| {
         s.split(',')
-            .map(|t| t.trim().to_lowercase())
-            .filter(|t| !t.is_empty() && t.len() <= 50)
+            .map(|t: &str| t.trim().to_lowercase())
+            .filter(|t: &String| !t.is_empty() && t.len() <= 50)
             .collect()
-    }).filter(|v| !v.is_empty());
+    }).filter(|v: &Vec<String>| !v.is_empty());
 
-    let ingredients: Option<Vec<String>> = params.get("ingredients").map(|s| {
+    let search_ingredients: Option<Vec<String>> = params.get("ingredients").map(|s: &String| {
         s.split(',')
-            .map(|i| i.trim().to_lowercase())
-            .filter(|i| !i.is_empty() && i.len() <= 50)
+            .map(|i: &str| i.trim().to_lowercase())
+            .filter(|i: &String| !i.is_empty() && i.len() <= 50)
             .collect()
-    }).filter(|v| !v.is_empty());
+    }).filter(|v: &Vec<String>| !v.is_empty());
 
     let recipes = query.all(&db).await?;
     let mut responses: Vec<RecipeResponse> = Vec::new();
@@ -211,9 +211,9 @@ pub async fn search_recipes(
             }
         }
 
-        if let Some(search_ingredients) = &ingredients {
-            let recipe_ingredients_lower: Vec<String> = ingredients.iter().map(|i| i.name.to_lowercase()).collect();
-            matches &= search_ingredients.iter().any(|si| recipe_ingredients_lower.iter().any(|ri| ri.contains(si)));
+        if let Some(search_ingredients) = &search_ingredients {
+            let recipe_ingredients_lower: Vec<String> = ingredients.iter().map(|i: &Ingredient| i.name.to_lowercase()).collect();
+            matches &= search_ingredients.iter().any(|si: &String| recipe_ingredients_lower.iter().any(|ri: &String| ri.contains(si)));
         }
 
         if matches {
