@@ -17,31 +17,25 @@ services:
       timeout: 5s
       retries: 5
 
-  api:
+  rust-backend:
     build:
-      context: ./api
-      target: build
+      context: ./rust-backend
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      ConnectionStrings__DefaultConnection: Host=postgres;Database=recipebox;Username=postgres;Password=password
-      DOTNET_USE_POLLING_FILE_WATCHER: true
-      ASPNETCORE_URLS: http://*:8080
+      DATABASE_URL: postgres://postgres:password@postgres/recipebox
     ports:
-      - "8080:8080"
-    volumes:
-      - ./api:/src
-      - /src/bin
-      - /src/obj
-    command: ["dotnet", "watch", "run", "--non-interactive", "--urls", "http://*:8080"]
+      - "3000:3000"
+
+    command: ["./rust-backend"]
 
   frontend:
     build:
       context: ./frontend
       target: development
     depends_on:
-      - api
+      - rust-backend
     ports:
       - "4200:4200"
     volumes:
@@ -50,7 +44,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
-      - VITE_API_BASE_URL=http://localhost:8080
+      - VITE_API_BASE_URL=http://localhost:3000
 
 volumes:
   postgres_data:

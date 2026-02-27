@@ -1,7 +1,7 @@
 Feature: Recipes
 
     Background:
-        Given I am logged in with email "test@example.com" and password "Test123!"
+        Given I am logged in with email "testuser@example.com" and password "Test123!"
 
     Scenario: Display recipes list
         Given I am on the recipes page

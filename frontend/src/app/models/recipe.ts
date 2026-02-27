@@ -1,5 +1,5 @@
 export interface Recipe {
-    id: number;
+    id: string;
     title: string;
     description: string;
     imageUrl: string;
@@ -10,7 +10,6 @@ export interface Recipe {
 }
 
 export interface Ingredient {
-    id: number;
     name: string;
     quantity: number;
     unit: string;

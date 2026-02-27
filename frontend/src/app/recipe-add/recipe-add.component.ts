@@ -87,7 +87,7 @@ export class RecipeAddComponent implements OnInit {
     if (this.recipeForm.valid) {
       const formValue = this.recipeForm.value;
       const recipe: Recipe = {
-        id: 0,
+        id: '',
         title: formValue.title,
         description: formValue.description,
         imageUrl: formValue.imageUrl,

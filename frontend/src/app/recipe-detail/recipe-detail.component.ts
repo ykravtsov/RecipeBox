@@ -18,7 +18,7 @@ import { Recipe } from '../models/recipe';
 })
 export class RecipeDetailComponent implements OnInit {
   recipe: Recipe = {
-    id: 0,
+    id: '',
     title: '',
     description: '',
     imageUrl: '',
@@ -35,7 +35,7 @@ export class RecipeDetailComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    const id = +this.route.snapshot.paramMap.get('id')!;
+    const id = this.route.snapshot.paramMap.get('id')!;
     const edit = this.route.snapshot.url.some(segment => segment.path === 'edit');
     this.isEditMode = edit;
 

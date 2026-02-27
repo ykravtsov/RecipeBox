@@ -24,7 +24,7 @@ export class RecipeService {
         return this.http.get<Recipe[]>(this.apiUrl, { headers: this.getHeaders() });
     }
 
-    getRecipe(id: number): Observable<Recipe> {
+    getRecipe(id: string): Observable<Recipe> {
         return this.http.get<Recipe>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
     }
 
@@ -32,15 +32,15 @@ export class RecipeService {
         return this.http.post<Recipe>(this.apiUrl, recipe, { headers: this.getHeaders() });
     }
 
-    updateRecipe(id: number, recipe: Recipe): Observable<void> {
+    updateRecipe(id: string, recipe: Recipe): Observable<void> {
         return this.http.put<void>(`${this.apiUrl}/${id}`, recipe, { headers: this.getHeaders() });
     }
 
-    deleteRecipe(id: number): Observable<void> {
+    deleteRecipe(id: string): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
     }
 
     scrapeRecipe(url: string): Observable<Recipe> {
-        return this.http.post<Recipe>(`${this.apiUrl}/scrape-recipe`, { url }, { headers: this.getHeaders() });
+        return this.http.post<Recipe>('/api/scrape-recipe', { url }, { headers: this.getHeaders() });
     }
 }
