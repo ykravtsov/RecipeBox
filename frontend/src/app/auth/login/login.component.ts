@@ -35,7 +35,7 @@ export class LoginComponent {
       const { email, password } = this.loginForm.value;
       this.authService.login(email, password).subscribe({
         next: () => {
-          this.router.navigate(['/']);
+          this.router.navigate(['/recipes']);
         },
         error: (error) => {
           this.errorMessage = 'Login failed. Please check your credentials.';

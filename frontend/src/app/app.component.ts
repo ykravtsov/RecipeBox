@@ -22,6 +22,9 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.authService.currentUser.subscribe(token => {
       this.isAuthenticated = !!token;
+      if (token) {
+        this.router.navigate(['/recipes']);
+      }
     });
   }
 
