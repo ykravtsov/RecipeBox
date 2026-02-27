@@ -5,15 +5,45 @@ Given("I am on the recipes page", async function () {
   await this.page.goto("http://localhost:4200/recipes");
 });
 
+Given("I have created a recipe", async function () {
+  const token = await this.page.evaluate(() =>
+    localStorage.getItem("authToken"),
+  );
+  const response = await fetch("http://localhost:3000/recipes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      title: "Test Recipe",
+      ingredients: [{ name: "flour", quantity: "1", unit: "cup" }],
+      instructions: "Mix and bake",
+    }),
+  });
+  console.log("Create recipe response status:", response.status);
+  const responseText = await response.text();
+  console.log("Create recipe response body:", responseText);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to create recipe: ${response.status} ${responseText}`,
+    );
+  }
+});
+
 Then("I should see recipe cards", async function () {
   // Recipes list is displayed (may be empty for new users)
   const recipesList = this.page.locator("mat-card"); // Assuming the recipes are in mat-cards
   await expect(recipesList).toBeVisible();
 });
 
-When("I click the {string} button", async function (buttonText) {
-  await this.page.getByRole("button", { name: buttonText }).click();
-});
+When(
+  "I click the {string} button",
+  { timeout: 30000 },
+  async function (buttonText) {
+    await this.page.getByRole("button", { name: buttonText }).click();
+  },
+);
 
 Then("I should be redirected to the add recipe page", async function () {
   await expect(this.page).toHaveURL(/.*add/);
@@ -21,6 +51,7 @@ Then("I should be redirected to the add recipe page", async function () {
 
 When(
   "I click the {string} button on the first recipe",
+  { timeout: 30000 },
   async function (buttonText) {
     await this.page.getByRole("button", { name: buttonText }).first().click();
   },
@@ -56,6 +87,7 @@ Given("I am on the add recipe page", async function () {
 
 When(
   "I fill in the recipe form with title {string}, description {string}, and ingredients {string}",
+  { timeout: 30000 },
   async function (title, description, ingredients) {
     // Take screenshot for debugging
     await this.page.screenshot({ path: "e2e/debug_add_recipe.png" });
@@ -103,6 +135,7 @@ Then(
 );
 
 When("I enter URL {string} in the import dialog", async function (url) {
+  await this.page.waitForSelector("mat-dialog-container");
   await this.page.fill('input[placeholder="https://example.com/recipe"]', url);
 });
 

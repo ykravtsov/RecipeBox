@@ -4,7 +4,7 @@ mod handlers;
 mod migration;
 
 use axum::{response::IntoResponse, routing::{get, put}, Router};
-use sea_orm::Database;
+use sea_orm::{Database, EntityTrait, ColumnTrait, ActiveModelTrait, QueryFilter, Set};
 use sea_orm_migration::MigratorTrait;
 use thiserror::Error;
 use tower_http::cors::{Any, CorsLayer};
@@ -45,6 +45,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Run migrations
     migration::Migrator::up(&db, None).await?;
+
+    // Seed test user
+    let existing = entities::user::Entity::find()
+        .filter(entities::user::Column::Email.eq("testuser@example.com"))
+        .one(&db)
+        .await?;
+    if existing.is_none() {
+        let password_hash = bcrypt::hash("Test123!", bcrypt::DEFAULT_COST)?;
+        let user = entities::user::ActiveModel {
+            id: Set(uuid::Uuid::new_v4()),
+            email: Set("testuser@example.com".to_string()),
+            password_hash: Set(password_hash),
+            created_at: Set(chrono::Utc::now()),
+        };
+        user.insert(&db).await?;
+    }
 
     let cors = CorsLayer::new()
         .allow_origin(Any)

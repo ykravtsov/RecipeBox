@@ -14,6 +14,7 @@ Feature: Recipes
         Then I should be redirected to the add recipe page
 
     Scenario: Navigate to recipe details
+        Given I have created a recipe
         Given I am on the recipes page
         When I click the "View Details" button on the first recipe
         Then I should be redirected to the recipe detail page

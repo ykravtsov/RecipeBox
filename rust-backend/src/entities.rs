@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ingredient {
     pub name: String,
-    pub quantity: f64,
+    pub quantity: String,
     pub unit: String,
 }
 
