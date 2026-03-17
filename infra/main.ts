@@ -28,6 +28,10 @@ class MyStack extends TerraformStack {
 
         new AzurermProvider(this, "AzureRm", {
             features: [{}],
+            subscriptionId: process.env.ARM_SUBSCRIPTION_ID,
+            tenantId: process.env.ARM_TENANT_ID,
+            clientId: process.env.ARM_CLIENT_ID,
+            clientSecret: process.env.ARM_CLIENT_SECRET,
         });
 
         const rg = new ResourceGroup(this, "rg", {
