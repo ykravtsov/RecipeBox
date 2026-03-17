@@ -1,4 +1,4 @@
-use axum::{extract::{Path, State, Query}, http::StatusCode, Json};
+use axum::{extract::{Path, State}, http::StatusCode, Json};
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 use bcrypt::{hash, verify, DEFAULT_COST};
@@ -172,10 +172,10 @@ pub async fn search_recipes(
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Result<Json<Vec<RecipeResponse>>, crate::AppError> {
     let user_id = Uuid::parse_str(&claims.sub)?;
-    let mut query = entities::Entity::find()
+    let query = entities::Entity::find()
         .filter(entities::Column::UserId.eq(user_id));
 
-    let tags: Option<Vec<String>> = params.get("tags").map(|s: &String| {
+    let _tags: Option<Vec<String>> = params.get("tags").map(|s: &String| {
         s.split(',')
             .map(|t: &str| t.trim().to_lowercase())
             .filter(|t: &String| !t.is_empty() && t.len() <= 50)
