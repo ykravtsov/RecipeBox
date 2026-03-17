@@ -25,13 +25,14 @@ class MyStack extends TerraformStack {
         // Get repository URL from environment or use default
         const repoUrl = process.env.GITHUB_REPOSITORY_URL || "https://github.com/your-org/recipebox";
         const pgPassword = process.env.POSTGRES_PASSWORD || "P@ssw0rd123!";
+        const azureCreds = JSON.parse(process.env.AZURE_CREDENTIALS || '{"subscriptionId":"","tenantId":"","clientId":"","clientSecret":""}');
 
         new AzurermProvider(this, "AzureRm", {
             features: [{}],
-            subscriptionId: process.env.ARM_SUBSCRIPTION_ID,
-            tenantId: process.env.ARM_TENANT_ID,
-            clientId: process.env.ARM_CLIENT_ID,
-            clientSecret: process.env.ARM_CLIENT_SECRET,
+            subscriptionId: azureCreds.subscriptionId,
+            tenantId: azureCreds.tenantId,
+            clientId: azureCreds.clientId,
+            clientSecret: azureCreds.clientSecret,
         });
 
         const rg = new ResourceGroup(this, "rg", {
