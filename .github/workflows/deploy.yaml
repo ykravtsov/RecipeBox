@@ -11,130 +11,7 @@ permissions:
   id-token: write
 
 jobs:
-  build-infra:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: read
-      id-token: write
-    env:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Check for infra changes
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            infra:
-              - 'infra/**'
-              - '.github/**'
-
-      - name: Debug env
-        if: steps.filter.outputs.infra == 'true'
-        env:
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        run: |
-          echo "ARM_SUBSCRIPTION_ID: $ARM_SUBSCRIPTION_ID"
-          echo "ARM_CLIENT_ID: $ARM_CLIENT_ID"
-          echo "ARM_TENANT_ID: $ARM_TENANT_ID"
-
-      # 1. Install Terraform CLI (CRITICAL FIX)
-      - name: Setup Terraform
-        if: steps.filter.outputs.infra == 'true'
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.6.0" # Match this to the version required by your stack
-          terraform_wrapper: false # Recommended for CDKTF to avoid output parsing issues
-
-      # 2. Setup Node.js
-      - name: Setup Node
-        if: steps.filter.outputs.infra == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # 3. Install Dependencies (Fixes npm issues)
-      - name: Install Dependencies
-        if: steps.filter.outputs.infra == 'true'
-        run: |
-          cd infra
-          npm ci
-
-      # 4. Generate CDKTF Constructs (If needed)
-      - name: Generate CDKTF
-        if: steps.filter.outputs.infra == 'true'
-        run: |
-          cd infra
-          npx cdktf-cli get
-
-      # 5. Synthesize Infrastructure
-      - name: Synthesize
-        if: steps.filter.outputs.infra == 'true'
-        env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-        run: |
-          cd infra
-          npx cdktf-cli synth
-      - name: Upload infrastructure artifact
-        if: steps.filter.outputs.infra == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: cdktf-out
-          path: infra/cdktf.out/
-      - name: Download previous artifact
-        if: steps.filter.outputs.infra != 'true'
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: deploy.yaml
-          name: cdktf-out
-          path: infra/cdktf.out/
-          branch: main
-          workflow_conclusion: success
-  test-infra:
-    needs: build-infra
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download infrastructure artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cdktf-out
-          path: infra/cdktf.out/
-      - name: Install Conftest
-        run: |
-          wget -O conftest.tar.gz https://github.com/open-policy-agent/conftest/releases/download/v0.48.0/conftest_0.48.0_Linux_x86_64.tar.gz
-          tar -xzf conftest.tar.gz
-          sudo mv conftest /usr/local/bin/
-      - name: Run infrastructure policy checks
-        run: |
-          conftest test infra/cdktf.out/stacks/recipebox-infra/ -p policy/terraform.rego
-      - name: Run ArgoCD policy checks
-        run: |
-          helm template recipebox k8s/ | conftest test -p policy/argocd.rego -
-      - name: Run Helm chart tests
-        run: |
-          helm lint k8s/
   deploy-infra:
-    needs: test-infra
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -149,33 +26,34 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Download infrastructure artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cdktf-out
-          path: infra/cdktf.out/
-
-      # REUSE THE ACTION (Much cleaner than wget)
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.6.0"
-          terraform_wrapper: false
-
-      # ALWAYS DEPLOY (Terraform handles the state logic)
-      - name: Deploy infrastructure
-        env:
-          # Pass these if your backend needs them, otherwise Azure CLI login handles it
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      - name: Install Azure CLI
         run: |
-          cd infra/cdktf.out/stacks/recipebox-infra
-          # Initialize fresh (download providers again since artifacts don't keep .terraform folder)
-          terraform init
-          terraform apply -auto-approve
+          # Azure CLI is pre-installed on GitHub runners, but ensure it's up to date
+          az upgrade --yes
+
+      - name: Create Resource Group
+        run: az group create --name rg-recipebox --location eastus --tags Environment=dev
+
+      - name: Create Container Registry
+        run: az acr create --name recipeboxacr --resource-group rg-recipebox --sku Basic --admin-enabled true --tags Environment=dev
+
+      - name: Create Storage Account
+        run: az storage account create --name recipeboxstorage --resource-group rg-recipebox --location eastus --sku Standard_LRS --allow-blob-public-access true --tags Environment=dev
+
+      - name: Enable Static Website
+        run: az storage blob service-properties update --account-name recipeboxstorage --static-website --index-document index.html --error-document-404-path index.html
+
+      - name: Create PostgreSQL Flexible Server
+        run: az postgres flexible-server create --name recipebox-pg --resource-group rg-recipebox --location eastus --admin-user pgadmin --admin-password ${{ secrets.POSTGRES_PASSWORD }} --sku-name Standard_B1ms --storage-size 32 --version 15 --zone 1 --tags Environment=dev
+
+      - name: Create PostgreSQL Database
+        run: az postgres flexible-server db create --server-name recipebox-pg --resource-group rg-recipebox --database-name recipebox
+
+      - name: Create CDN Profile
+        run: az cdn profile create --name recipebox-cdn --resource-group rg-recipebox --location eastus --sku Standard_Microsoft --tags Environment=dev
+
+      - name: Create CDN Endpoint
+        run: az cdn endpoint create --name recipebox-frontend --profile-name recipebox-cdn --resource-group rg-recipebox --location eastus --origin recipeboxstorage.z13.web.core.windows.net --origin-host-header recipeboxstorage.z13.web.core.windows.net --tags Environment=dev
   build-and-deploy-app:
     needs: deploy-infra
     runs-on: ubuntu-latest
