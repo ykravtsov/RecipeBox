@@ -54,7 +54,7 @@ class MyStack extends TerraformStack {
         });
 
         const storageAccount = new StorageAccount(this, "storage", {
-            name: "recipeboxstorage",
+            name: "recipeboxstorage20260317",
             resourceGroupName: rg.name,
             location: rg.location,
             accountTier: "Standard",
@@ -112,95 +112,117 @@ class MyStack extends TerraformStack {
             serverId: pgServer.id,
         });
 
-        // // Assume pre-made k8s cluster
-        // const kubeHost = process.env.KUBERNETES_HOST || "https://kubernetes.default.svc";
-        // const kubeClientCert = process.env.KUBERNETES_CLIENT_CERTIFICATE || "";
-        // const kubeClientKey = process.env.KUBERNETES_CLIENT_KEY || "";
-        // const kubeClusterCa = process.env.KUBERNETES_CLUSTER_CA_CERTIFICATE || "";
+        const aks = new KubernetesCluster(this, "aks", {
+            name: "recipebox-aks",
+            location: rg.location,
+            resourceGroupName: rg.name,
+            dnsPrefix: "recipebox",
+            defaultNodePool: {
+                name: "default",
+                nodeCount: 1,
+                vmSize: "Standard_DS2_v2",
+                tags: {
+                    Environment: "Development",
+                },
+            },
+            identity: {
+                type: "SystemAssigned",
+            },
+            roleBasedAccessControlEnabled: true,
+            tags: {
+                Environment: "dev",
+            },
+        });
 
-        // // Kubernetes provider
-        // new KubernetesProvider(this, "k8s", {
-        //     host: kubeHost,
-        //     clientCertificate: kubeClientCert,
-        //     clientKey: kubeClientKey,
-        //     clusterCaCertificate: kubeClusterCa,
-        // });
+        new RoleAssignment(this, "acrPull", {
+            scope: acr.id,
+            roleDefinitionName: "AcrPull",
+            principalId: aks.kubeletIdentity.objectId,
+        });
 
-        // // Helm provider
-        // new HelmProvider(this, "helm", {
-        //     kubernetes: {
-        //         host: kubeHost,
-        //         clientCertificate: kubeClientCert,
-        //         clientKey: kubeClientKey,
-        //         clusterCaCertificate: kubeClusterCa,
-        //     },
-        // });
+        // Kubernetes provider
+        new KubernetesProvider(this, "k8s", {
+            host: aks.kubeConfig.get(0).host,
+            clientCertificate: aks.kubeConfig.get(0).clientCertificate,
+            clientKey: aks.kubeConfig.get(0).clientKey,
+            clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
+        });
 
-        // // ArgoCD namespace
-        // new Namespace(this, "argocd-ns", {
-        //     metadata: {
-        //         name: "argocd",
-        //     },
-        // });
+        // Helm provider
+        new HelmProvider(this, "helm", {
+            kubernetes: {
+                host: aks.kubeConfig.get(0).host,
+                clientCertificate: aks.kubeConfig.get(0).clientCertificate,
+                clientKey: aks.kubeConfig.get(0).clientKey,
+                clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
+            },
+        });
 
-        // // ArgoCD Helm release
-        // new Release(this, "argocd", {
-        //     name: "argocd",
-        //     repository: "https://argoproj.github.io/argo-helm",
-        //     chart: "argo-cd",
-        //     namespace: "argocd",
-        //     set: [
-        //         {
-        //             name: "server.service.type",
-        //             value: "LoadBalancer",
-        //         },
-        //     ],
-        // });
+        // ArgoCD namespace
+        new Namespace(this, "argocd-ns", {
+            metadata: {
+                name: "argocd",
+            },
+        });
 
-        // // ArgoCD Applications
-        // const argocdAppNamespace = new Namespace(this, "argocd-apps-ns", {
-        //     metadata: {
-        //         name: "argocd-apps",
-        //     },
-        // });
+        // ArgoCD Helm release
+        new Release(this, "argocd", {
+            name: "argocd",
+            repository: "https://argoproj.github.io/argo-helm",
+            chart: "argo-cd",
+            namespace: "argocd",
+            set: [
+                {
+                    name: "server.service.type",
+                    value: "LoadBalancer",
+                },
+            ],
+        });
 
-        // // RecipeBox Backend Application
-        // new Manifest(this, "recipebox-backend-app", {
-        //     manifest: {
-        //         apiVersion: "argoproj.io/v1alpha1",
-        //         kind: "Application",
-        //         metadata: {
-        //             name: "recipebox-backend",
-        //             namespace: "argocd",
-        //         },
-        //         spec: {
-        //             project: "default",
-        //             source: {
-        //                 repoURL: repoUrl,
-        //                 path: "k8s",
-        //                 targetRevision: "HEAD",
-        //                 helm: {
-        //                     valueFiles: ["values.yaml"],
-        //                 },
-        //             },
-        //             destination: {
-        //                 server: "https://kubernetes.default.svc",
-        //                 namespace: "default",
-        //             },
-        //             syncPolicy: {
-        //                 automated: {
-        //                     prune: true,
-        //                     selfHeal: true,
-        //                 },
-        //             },
-        //         },
-        //     },
-        // });
+        // ArgoCD Applications
+        const argocdAppNamespace = new Namespace(this, "argocd-apps-ns", {
+            metadata: {
+                name: "argocd-apps",
+            },
+        });
+
+        // RecipeBox Backend Application
+        new Manifest(this, "recipebox-backend-app", {
+            manifest: {
+                apiVersion: "argoproj.io/v1alpha1",
+                kind: "Application",
+                metadata: {
+                    name: "recipebox-backend",
+                    namespace: "argocd",
+                },
+                spec: {
+                    project: "default",
+                    source: {
+                        repoURL: repoUrl,
+                        path: "k8s",
+                        targetRevision: "HEAD",
+                        helm: {
+                            valueFiles: ["values.yaml"],
+                        },
+                    },
+                    destination: {
+                        server: "https://kubernetes.default.svc",
+                        namespace: "default",
+                    },
+                    syncPolicy: {
+                        automated: {
+                            prune: true,
+                            selfHeal: true,
+                        },
+                    },
+                },
+            },
+        });
 
 
-        // new TerraformOutput(this, "kube_config", {
-        //     value: aks.kubeConfigRaw,
-        // });
+        new TerraformOutput(this, "kube_config", {
+            value: aks.kubeConfigRaw,
+        });
 
         new TerraformOutput(this, "cdn_endpoint", {
             value: cdnEndpoint.fqdn,
