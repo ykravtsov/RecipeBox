@@ -112,49 +112,27 @@ class MyStack extends TerraformStack {
             serverId: pgServer.id,
         });
 
-        const aks = new KubernetesCluster(this, "aks", {
-            name: "recipebox-aks",
-            location: rg.location,
-            resourceGroupName: rg.name,
-            dnsPrefix: "recipebox",
-            defaultNodePool: {
-                name: "default",
-                nodeCount: 1,
-                vmSize: "Standard_DS2_v2",
-                tags: {
-                    Environment: "Development",
-                },
-            },
-            identity: {
-                type: "SystemAssigned",
-            },
-            roleBasedAccessControlEnabled: true,
-            tags: {
-                Environment: "dev",
-            },
-        });
-
-        new RoleAssignment(this, "acrPull", {
-            scope: acr.id,
-            roleDefinitionName: "AcrPull",
-            principalId: aks.kubeletIdentity.objectId,
-        });
+        // Assume pre-made k8s cluster
+        const kubeHost = process.env.KUBERNETES_HOST || "https://kubernetes.default.svc";
+        const kubeClientCert = process.env.KUBERNETES_CLIENT_CERTIFICATE || "";
+        const kubeClientKey = process.env.KUBERNETES_CLIENT_KEY || "";
+        const kubeClusterCa = process.env.KUBERNETES_CLUSTER_CA_CERTIFICATE || "";
 
         // Kubernetes provider
         new KubernetesProvider(this, "k8s", {
-            host: aks.kubeConfig.get(0).host,
-            clientCertificate: aks.kubeConfig.get(0).clientCertificate,
-            clientKey: aks.kubeConfig.get(0).clientKey,
-            clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
+            host: kubeHost,
+            clientCertificate: kubeClientCert,
+            clientKey: kubeClientKey,
+            clusterCaCertificate: kubeClusterCa,
         });
 
         // Helm provider
         new HelmProvider(this, "helm", {
             kubernetes: {
-                host: aks.kubeConfig.get(0).host,
-                clientCertificate: aks.kubeConfig.get(0).clientCertificate,
-                clientKey: aks.kubeConfig.get(0).clientKey,
-                clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
+                host: kubeHost,
+                clientCertificate: kubeClientCert,
+                clientKey: kubeClientKey,
+                clusterCaCertificate: kubeClusterCa,
             },
         });
 
@@ -220,9 +198,9 @@ class MyStack extends TerraformStack {
         });
 
 
-        new TerraformOutput(this, "kube_config", {
-            value: aks.kubeConfigRaw,
-        });
+        // new TerraformOutput(this, "kube_config", {
+        //     value: aks.kubeConfigRaw,
+        // });
 
         new TerraformOutput(this, "cdn_endpoint", {
             value: cdnEndpoint.fqdn,
