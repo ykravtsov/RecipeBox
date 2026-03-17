@@ -1,6 +1,7 @@
 # Development stage
 FROM node:18 AS development
 WORKDIR /app
+RUN apt-get update && apt-get install -y chromium
 COPY package*.json ./
 RUN npm install
 COPY . .

@@ -1,33 +1,36 @@
 # RecipeBox
 
-A modern recipe management application built with ASP.NET Core API, Angular frontend, and deployed on Azure Kubernetes Service.
+A modern recipe management and meal planning application built with Rust backend, Angular frontend, and deployed on Azure Kubernetes Service.
 
 ## Features
 
 - **Recipe Management**: Add, edit, view, and organize your favorite recipes
 - **Import Recipes**: Import recipes from URLs using AI-powered parsing
+- **Meal Planning**: Plan and organize meals with your recipes
 - **User Authentication**: Secure user registration and login
 - **Image Upload**: Upload and store recipe images
-- **Responsive Design**: Modern Angular frontend with Material Design
-- **API-First Architecture**: RESTful API with comprehensive documentation
+- **Recipe Search**: Search and filter through your recipe collection
+- **Responsive Design**: Modern Angular frontend with Material Design and static site generation
+- **API-First Architecture**: RESTful API built with Rust and Axum
 - **Containerized Deployment**: Docker containers with Kubernetes orchestration
 - **Infrastructure as Code**: Azure infrastructure provisioned with CDK for Terraform
 - **Policy as Code**: OPA policies for infrastructure validation
+- **End-to-End Testing**: Cucumber-based E2E tests
 
 ## Architecture
 
-RecipeBox follows a microservices architecture with the following components:
+RecipeBox follows a modern web application architecture with the following components:
 
-- **API** (`api/`): ASP.NET Core Web API with Entity Framework Core and PostgreSQL
-- **Frontend** (`frontend/`): Angular application with TypeScript
+- **Backend** (`rust-backend/`): Rust Web API with Axum framework and SeaORM for PostgreSQL
+- **Frontend** (`frontend/`): Angular 17 application with TypeScript and Scully for static site generation
 - **Infrastructure** (`infra/`): CDK for Terraform code for Azure resources
 - **Kubernetes** (`k8s/`): Helm charts for deployment
-- **E2E Tests** (`e2e/`): Playwright with Cucumber for end-to-end testing
+- **E2E Tests** (`e2e/`): Cucumber with Playwright for end-to-end testing
 - **Policy** (`policy/`): Open Policy Agent policies for infrastructure validation
 
 ## Prerequisites
 
-- .NET 8 SDK
+- Rust (latest stable)
 - Node.js 18+
 - Angular CLI 17+
 - Docker & Docker Compose
@@ -48,36 +51,35 @@ RecipeBox follows a microservices architecture with the following components:
 2. **Start the database**
 
    ```bash
-   docker-compose up -d
+   docker-compose up -d postgres
    ```
 
-3. **Setup the API**
+3. **Setup the Backend**
 
    ```bash
-   cd api
-   dotnet restore
-   dotnet ef database update
-   dotnet run
+   cd rust-backend
+   cargo build
+   cargo run
    ```
 
-4. **Setup the Frontend**
+4. **Setup the Frontend** (in a new terminal)
 
    ```bash
-   cd ../frontend
+   cd frontend
    npm install
    ng serve
    ```
 
 5. **Access the application**
    - Frontend: http://localhost:4200
-   - API: http://localhost:5000
+   - Backend API: http://localhost:3000
 
 ### Running Tests
 
 ```bash
-# API Tests
-cd api
-dotnet test
+# Backend Tests
+cd rust-backend
+cargo test
 
 # Frontend Tests
 cd frontend
@@ -94,6 +96,19 @@ npm run test
 ```bash
 # Build and run all services
 docker-compose up --build
+```
+
+Or run services individually:
+
+```bash
+# Start only the database
+docker-compose up postgres
+
+# Start backend and database
+docker-compose up rust-backend
+
+# Start frontend (after backend is running)
+docker-compose up frontend
 ```
 
 ## Deployment
@@ -131,14 +146,13 @@ docker-compose up --build
    helm install recipebox ./k8s
    ```
 
-## API Documentation
+## API Endpoints
 
-The API provides RESTful endpoints for:
+The backend API provides RESTful endpoints for:
 
-- User authentication (`/api/auth`)
-- Recipe management (`/api/recipes`)
-
-API documentation is available via Swagger at `/swagger` when running locally.
+- User authentication (`/auth/register`, `/auth/login`)
+- Recipe management (`/recipes`, `/recipes/:id`, `/recipes/search`)
+- Recipe import (`/scrape-recipe`)
 
 ## Contributing
 
