@@ -4,11 +4,28 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to (dev/staging/prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
 
 permissions:
   contents: read
   actions: read
   id-token: write
+
+# REQUIRED GITHUB SECRETS (set in repository Settings → Secrets):
+# - AZURE_CREDENTIALS: JSON with subscriptionId, tenantId, clientId, clientSecret
+#   Get from: az ad sp create-for-rbac --role Contributor
+# - POSTGRES_PASSWORD: Strong password (min 8 chars, uppercase, lowercase, number, special char)
+# - GITHUB_REPOSITORY_URL: Full repository URL (https://github.com/your-org/recipebox)
 
 jobs:
   deploy-infra:
@@ -16,50 +33,59 @@ jobs:
     permissions:
       contents: read
       actions: read
-      id-token: write # Required for Azure OIDC login if you use it later
+      id-token: write
+    outputs:
+      storage_account_name: ${{ steps.infra_deploy.outputs.storage_account_name }}
+      acr_login_server: ${{ steps.infra_deploy.outputs.acr_login_server }}
+      acr_name: ${{ steps.infra_deploy.outputs.acr_name }}
+      resource_group_name: ${{ steps.infra_deploy.outputs.resource_group_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install CDKTF and dependencies
+        run: |
+          cd infra
+          npm install
+
+      - name: Build CDKTF
+        run: |
+          cd infra
+          npm run build
 
       - name: Log in to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Install Azure CLI
+      - name: Deploy infrastructure with CDKTF
+        id: infra_deploy
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GITHUB_REPOSITORY_URL: ${{ secrets.GITHUB_REPOSITORY_URL || format('{0}/{1}', github.server_url, github.repository) }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         run: |
-          # Azure CLI is pre-installed on GitHub runners, but ensure it's up to date
-          az upgrade --yes
+          cd infra
+          npx cdktf deploy --auto-approve recipebox-infra
 
-      - name: Create Resource Group
-        run: az group create --name rg-recipebox --location eastus --tags Environment=dev
 
-      - name: Create Container Registry
-        run: az acr create --name recipeboxacr --resource-group rg-recipebox --sku Basic --admin-enabled true --tags Environment=dev
-
-      - name: Create Storage Account
-        run: az storage account create --name recipeboxstorage --resource-group rg-recipebox --location eastus --sku Standard_LRS --allow-blob-public-access true --tags Environment=dev
-
-      - name: Enable Static Website
-        run: az storage blob service-properties update --account-name recipeboxstorage --static-website --index-document index.html --error-document-404-path index.html
-
-      - name: Create PostgreSQL Flexible Server
-        run: az postgres flexible-server create --name recipebox-pg --resource-group rg-recipebox --location eastus --admin-user pgadmin --admin-password ${{ secrets.POSTGRES_PASSWORD }} --sku-name Standard_B1ms --storage-size 32 --version 15 --zone 1 --tags Environment=dev
-
-      - name: Create PostgreSQL Database
-        run: az postgres flexible-server db create --server-name recipebox-pg --resource-group rg-recipebox --database-name recipebox
-
-      - name: Create CDN Profile
-        run: az cdn profile create --name recipebox-cdn --resource-group rg-recipebox --location eastus --sku Standard_Microsoft --tags Environment=dev
-
-      - name: Create CDN Endpoint
-        run: az cdn endpoint create --name recipebox-frontend --profile-name recipebox-cdn --resource-group rg-recipebox --location eastus --origin recipeboxstorage.z13.web.core.windows.net --origin-host-header recipeboxstorage.z13.web.core.windows.net --tags Environment=dev
   build-and-deploy-app:
     needs: deploy-infra
     runs-on: ubuntu-latest
     permissions:
       contents: write # Allows pushing changes to the repo
       id-token: write # Required for Azure login
+    env:
+      STORAGE_ACCOUNT_NAME: ${{ needs.deploy-infra.outputs.storage_account_name }}
+      ACR_LOGIN_SERVER: ${{ needs.deploy-infra.outputs.acr_login_server }}
+      ACR_NAME: ${{ needs.deploy-infra.outputs.acr_name }}
+      RESOURCE_GROUP: ${{ needs.deploy-infra.outputs.resource_group_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -95,18 +121,18 @@ jobs:
           node-version: "18"
       - name: Build and push Backend Docker image
         run: |
-          az acr login --name recipeboxacr
+          az acr login --name ${{ env.ACR_NAME }}
           cd rust-backend
-          docker build -t recipeboxacr.azurecr.io/recipebox-backend:${{ github.sha }} .
-          docker push recipeboxacr.azurecr.io/recipebox-backend:${{ github.sha }}
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/recipebox-backend:${{ github.sha }} .
+          docker push ${{ env.ACR_LOGIN_SERVER }}/recipebox-backend:${{ github.sha }}
       - name: Build and deploy Frontend to CDN
         if: steps.changed-files.outputs.frontend_any_changed == 'true'
         run: |
           cd frontend
           npm install
           npm run build --prod
-          az storage blob upload-batch --account-name recipeboxstorage --destination '$web' --source dist/frontend --overwrite
-          az cdn endpoint purge --resource-group rg-recipebox --profile-name recipebox-cdn --name recipebox-frontend --content-paths '/*'
+          az storage blob upload-batch --account-name ${{ env.STORAGE_ACCOUNT_NAME }} --destination '$web' --source dist/frontend --overwrite
+          az cdn endpoint purge --resource-group ${{ env.RESOURCE_GROUP }} --profile-name recipebox-cdn-${{ github.event.inputs.environment || 'dev' }} --name recipebox-frontend-${{ github.event.inputs.environment || 'dev' }} --content-paths '/*'
       - name: Run Playwright tests
         if: steps.changed-files.outputs.frontend_any_changed == 'true'
         env:
