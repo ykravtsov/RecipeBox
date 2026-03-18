@@ -17,10 +17,6 @@ import { Release } from "@cdktf/provider-helm/lib/release";
 import { PostgresqlFlexibleServer } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server";
 import { PostgresqlFlexibleServerDatabase } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-database";
 import { PostgresqlFlexibleServerFirewallRule } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-firewall-rule";
-import { Manifest } from "@cdktf/provider-kubernetes/lib/manifest";
-import { StorageAccount } from "@cdktf/provider-azurerm/lib/storage-account";
-import { CdnProfile } from "@cdktf/provider-azurerm/lib/cdn-profile";
-import { CdnEndpoint } from "@cdktf/provider-azurerm/lib/cdn-endpoint";
 import { KeyVault } from "@cdktf/provider-azurerm/lib/key-vault";
 import { KeyVaultSecret } from "@cdktf/provider-azurerm/lib/key-vault-secret";
 import { DataAzurermClientConfig } from "@cdktf/provider-azurerm/lib/data-azurerm-client-config";
@@ -306,45 +302,8 @@ class MyStack extends TerraformStack {
             ],
         });
 
-        // ArgoCD Applications
-        const argocdAppNamespace = new Namespace(this, "argocd-apps-ns", {
-            metadata: {
-                name: "argocd-apps",
-            },
-        });
-
-        // RecipeBox Backend Application
-        new Manifest(this, "recipebox-backend-app", {
-            manifest: {
-                apiVersion: "argoproj.io/v1alpha1",
-                kind: "Application",
-                metadata: {
-                    name: "recipebox-backend",
-                    namespace: "argocd",
-                },
-                spec: {
-                    project: "default",
-                    source: {
-                        repoURL: repoUrl,
-                        path: "k8s",
-                        targetRevision: "HEAD",
-                        helm: {
-                            valueFiles: ["values.yaml"],
-                        },
-                    },
-                    destination: {
-                        server: "https://kubernetes.default.svc",
-                        namespace: "default",
-                    },
-                    syncPolicy: {
-                        automated: {
-                            prune: true,
-                            selfHeal: true,
-                        },
-                    },
-                },
-            },
-        });
+        // Note: ArgoCD Application resources are managed by GitOps (in k8s/application.yaml)
+        // This allows ArgoCD to manage itself and prevents timing issues during initial deployment
 
         // Outputs
         new TerraformOutput(this, "environment", {
