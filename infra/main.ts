@@ -47,7 +47,7 @@ const ENV = process.env.ENVIRONMENT || "dev";
 const environmentConfigs: Record<string, EnvironmentConfig> = {
   dev: {
     name: "dev",
-    location: "East US",
+    location: "West US 2",
     acrSku: "Basic",
     aksNodeCount: 1,
     aksVmSize: "Standard_DS2_v2",
@@ -64,7 +64,7 @@ const environmentConfigs: Record<string, EnvironmentConfig> = {
   },
   staging: {
     name: "staging",
-    location: "East US",
+    location: "West US 2",
     acrSku: "Standard",
     aksNodeCount: 2,
     aksVmSize: "Standard_DS3_v2",
@@ -81,7 +81,7 @@ const environmentConfigs: Record<string, EnvironmentConfig> = {
   },
   prod: {
     name: "prod",
-    location: "East US",
+    location: "West US 2",
     acrSku: "Premium",
     aksNodeCount: 3,
     aksVmSize: "Standard_DS3_v2",
