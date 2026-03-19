@@ -9,15 +9,9 @@ import { AzurermProvider } from "@cdktf/provider-azurerm/lib/provider";
 import { ResourceGroup } from "@cdktf/provider-azurerm/lib/resource-group";
 import { ContainerRegistry } from "@cdktf/provider-azurerm/lib/container-registry";
 import { KubernetesCluster } from "@cdktf/provider-azurerm/lib/kubernetes-cluster";
-import { RoleAssignment } from "@cdktf/provider-azurerm/lib/role-assignment";
 import { PostgresqlFlexibleServer } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server";
 import { PostgresqlFlexibleServerDatabase } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-database";
 import { PostgresqlFlexibleServerFirewallRule } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-firewall-rule";
-import { StorageAccount } from "@cdktf/provider-azurerm/lib/storage-account";
-import { CdnProfile } from "@cdktf/provider-azurerm/lib/cdn-profile";
-import { CdnEndpoint } from "@cdktf/provider-azurerm/lib/cdn-endpoint";
-import { KeyVault } from "@cdktf/provider-azurerm/lib/key-vault";
-import { KeyVaultSecret } from "@cdktf/provider-azurerm/lib/key-vault-secret";
 import { DataAzurermClientConfig } from "@cdktf/provider-azurerm/lib/data-azurerm-client-config";
 
 /**
@@ -32,9 +26,6 @@ interface EnvironmentConfig {
   aksVmSize: string;
   pgSkuName: string;
   pgStorageMb: number;
-  storageAccountTier: string;
-  storageAccountReplication: string;
-  cdnSku: string;
   tags: Record<string, string>;
 }
 
@@ -49,9 +40,6 @@ const environmentConfigs: Record<string, EnvironmentConfig> = {
     aksVmSize: "Standard_DS2_v2",
     pgSkuName: "B_Standard_B1ms",
     pgStorageMb: 32768,
-    storageAccountTier: "Standard",
-    storageAccountReplication: "LRS",
-    cdnSku: "Standard_Microsoft",
     tags: {
       Environment: "dev",
       ManagedBy: "Terraform",
@@ -66,9 +54,6 @@ const environmentConfigs: Record<string, EnvironmentConfig> = {
     aksVmSize: "Standard_DS3_v2",
     pgSkuName: "GP_Standard_D2s_v3",
     pgStorageMb: 65536,
-    storageAccountTier: "Standard",
-    storageAccountReplication: "GRS",
-    cdnSku: "Standard_Microsoft",
     tags: {
       Environment: "staging",
       ManagedBy: "Terraform",
@@ -83,9 +68,6 @@ const environmentConfigs: Record<string, EnvironmentConfig> = {
     aksVmSize: "Standard_DS3_v2",
     pgSkuName: "GP_Standard_D4s_v3",
     pgStorageMb: 131072,
-    storageAccountTier: "Premium",
-    storageAccountReplication: "GRS",
-    cdnSku: "Premium_Microsoft",
     tags: {
       Environment: "prod",
       ManagedBy: "Terraform",
@@ -123,41 +105,10 @@ class MyStack extends TerraformStack {
             clientSecret: azureCreds.clientSecret,
         });
 
-        // Get current Azure client configuration for Key Vault access policies
-        const currentClientConfig = new DataAzurermClientConfig(this, "current-config", {});
-
         const rg = new ResourceGroup(this, "rg", {
             name: `rg-recipebox-${config.name}`,
             location: config.location,
             tags: config.tags,
-        });
-
-        // Azure Key Vault for secrets management
-        const keyVault = new KeyVault(this, "keyvault", {
-            name: `recipebox-kv-${config.name}`,
-            location: rg.location,
-            resourceGroupName: rg.name,
-            tenantId: azureCreds.tenantId,
-            skuName: "standard",
-            enabledForDeployment: true,
-            enabledForDiskEncryption: false,
-            enabledForTemplateDeployment: true,
-            accessPolicy: [
-                {
-                    tenantId: azureCreds.tenantId,
-                    objectId: currentClientConfig.objectId,
-                    keyPermissions: ["Get", "List", "Create", "Delete", "Update"],
-                    secretPermissions: ["Get", "List", "Set", "Delete"],
-                },
-            ],
-            tags: config.tags,
-        });
-
-        // Store PostgreSQL password in Key Vault
-        new KeyVaultSecret(this, "pg-password-secret", {
-            name: "postgres-password",
-            value: pgPassword,
-            keyVaultId: keyVault.id,
         });
 
         const acr = new ContainerRegistry(this, "acr", {
@@ -166,39 +117,6 @@ class MyStack extends TerraformStack {
             location: rg.location,
             sku: config.acrSku,
             adminEnabled: true,
-            tags: config.tags,
-        });
-
-        const storageAccount = new StorageAccount(this, "storage", {
-            name: `recipebox${config.name}storage`,
-            resourceGroupName: rg.name,
-            location: rg.location,
-            accountTier: config.storageAccountTier,
-            accountReplicationType: config.storageAccountReplication,
-            staticWebsite: {
-                indexDocument: "index.html",
-                error404Document: "index.html",
-            },
-            tags: config.tags,
-        });
-
-        const cdnProfile = new CdnProfile(this, "cdnProfile", {
-            name: `recipebox-cdn-${config.name}`,
-            location: "Global",
-            resourceGroupName: rg.name,
-            sku: config.cdnSku,
-            tags: config.tags,
-        });
-
-        const cdnEndpoint = new CdnEndpoint(this, "cdnEndpoint", {
-            name: `recipebox-frontend-${config.name}`,
-            profileName: cdnProfile.name,
-            location: "Global",
-            resourceGroupName: rg.name,
-            origin: [{
-                name: "recipebox-origin",
-                hostName: storageAccount.primaryWebHost,
-            }],
             tags: config.tags,
         });
 
@@ -256,11 +174,8 @@ class MyStack extends TerraformStack {
             tags: config.tags,
         });
 
-        new RoleAssignment(this, "acrPull", {
-            scope: acr.id,
-            roleDefinitionName: "AcrPull",
-            principalId: aks.kubeletIdentity.objectId,
-        });
+        // Configure ACR pull permissions in post-deployment (requires User Access Administrator role)
+        // See deploy.yml for kubectl apply of ArgoCD + image pull secrets
 
         // NOTE: ArgoCD is deployed separately after cluster is ready
         // See: k8s/application.yaml for ArgoCD configuration
@@ -282,30 +197,20 @@ class MyStack extends TerraformStack {
             description: "Azure Container Registry name",
         });
 
+        new TerraformOutput(this, "aks_name", {
+            value: aks.name,
+            description: "Azure Kubernetes Service cluster name",
+        });
+
         new TerraformOutput(this, "kube_config", {
             value: aks.kubeConfigRaw,
             sensitive: true,
             description: "Kubernetes cluster kubeconfig",
         });
 
-        new TerraformOutput(this, "cdn_endpoint", {
-            value: cdnEndpoint.fqdn,
-            description: "CDN endpoint FQDN for static frontend",
-        });
-
-        new TerraformOutput(this, "storage_account_name", {
-            value: storageAccount.name,
-            description: "Storage account name for frontend deployment",
-        });
-
         new TerraformOutput(this, "postgresql_fqdn", {
             value: pgServer.fqdn,
             description: "PostgreSQL server FQDN",
-        });
-
-        new TerraformOutput(this, "key_vault_id", {
-            value: keyVault.id,
-            description: "Key Vault ID for secrets management",
         });
 
         new TerraformOutput(this, "resource_group_name", {
