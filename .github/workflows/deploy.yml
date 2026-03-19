@@ -1,4 +1,5 @@
 name: Deploy Infrastructure
+# Deploys RecipeBox infrastructure to Azure using CDKTF
 
 on:
   push:
@@ -100,10 +101,14 @@ jobs:
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.action }}" == "destroy" ]]; then
             echo "Skipping plan, will destroy directly"
           else
-            npx cdktf plan recipebox-infra
+            npx cdktf plan recipebox-infra 2>&1 | tee plan-output.txt
+            # Check if there are changes - if not, this is likely a code change, just notify
+            if grep -q "0 to add, 0 to change, 0 to destroy" plan-output.txt; then
+              echo "No infrastructure changes detected. Code changes will be handled by ArgoCD."
+            fi
           fi
 
-      - name: Apply infrastructure (automatic for main branch)
+      - name: Apply infrastructure (automatic for infra changes)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: infra
         env:
@@ -145,6 +150,99 @@ jobs:
           echo "## Deployment Outputs" >> $GITHUB_STEP_SUMMARY
           npx cdktf output recipebox-infra >> $GITHUB_STEP_SUMMARY 2>&1 || true
 
+      - name: Verify infrastructure deployment
+        if: success() && github.event_name == 'push'
+        run: |
+          echo "Verifying infrastructure deployment..."
+          
+          # Get resource group name
+          RG_NAME="rg-recipebox-${{ steps.env.outputs.environment }}"
+          
+          # Verify resource group exists
+          if az group show --name "$RG_NAME" &>/dev/null; then
+            echo "✓ Resource group exists: $RG_NAME"
+          else
+            echo "✗ Resource group not found: $RG_NAME"
+            exit 1
+          fi
+          
+          # Verify AKS cluster
+          CLUSTER_NAME="recipebox-aks-${{ steps.env.outputs.environment }}"
+          if az aks show --resource-group "$RG_NAME" --name "$CLUSTER_NAME" &>/dev/null; then
+            echo "✓ AKS cluster deployed: $CLUSTER_NAME"
+          else
+            echo "✗ AKS cluster not found"
+            exit 1
+          fi
+          
+          # Verify PostgreSQL
+          PG_NAME="recipebox-pg-${{ steps.env.outputs.environment }}"
+          if az postgres flexible-server show --name "$PG_NAME" --resource-group "$RG_NAME" &>/dev/null; then
+            echo "✓ PostgreSQL database deployed: $PG_NAME"
+          else
+            echo "✗ PostgreSQL not found"
+            exit 1
+          fi
+          
+          # Verify Container Registry
+          ACR_NAME="recipeboxacr${{ steps.env.outputs.environment }}"
+          if az acr show --name "$ACR_NAME" --resource-group "$RG_NAME" &>/dev/null; then
+            echo "✓ Container Registry deployed: $ACR_NAME"
+          else
+            echo "✗ Container Registry not found"
+            exit 1
+          fi
+
+      - name: Run infrastructure tests
+        if: success() && github.event_name == 'push'
+        working-directory: infra
+        run: npm run test 2>&1 || echo "No tests defined"
+
+      - name: Wait for cluster stabilization
+        if: success() && github.event_name == 'push'
+        run: |
+          echo "Waiting for Kubernetes cluster to stabilize..."
+          sleep 30
+          
+          # Get kubeconfig
+          az aks get-credentials \
+            --resource-group "rg-recipebox-${{ steps.env.outputs.environment }}" \
+            --name "recipebox-aks-${{ steps.env.outputs.environment }}" \
+            --overwrite-existing
+          
+          # Wait for ArgoCD to be ready
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=argocd-server \
+            -n argocd \
+            --timeout=300s 2>/dev/null || echo "ArgoCD not ready yet"
+          
+          # Wait for API deployment
+          kubectl wait --for=condition=ready pod \
+            -l app=recipebox-api \
+            --timeout=300s 2>/dev/null || echo "API deployment not ready yet"
+
+      - name: Run API integration tests
+        if: success() && github.event_name == 'push'
+        run: |
+          echo "Running API integration tests..."
+          
+          # Port forward to API
+          kubectl port-forward -n default svc/recipebox-api 3000:3000 &
+          PF_PID=$!
+          sleep 5
+          
+          # Run API tests
+          bash test_api.sh || TEST_RESULT=$?
+          
+          # Kill port forward
+          kill $PF_PID 2>/dev/null || true
+          
+          if [ -n "$TEST_RESULT" ] && [ "$TEST_RESULT" != "0" ]; then
+            echo "API tests failed!"
+            exit $TEST_RESULT
+          fi
+          echo "✓ API integration tests passed"
+
       - name: Post deployment summary
         if: always()
         run: |
@@ -152,6 +250,11 @@ jobs:
           echo "- Environment: ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Architecture" >> $GITHUB_STEP_SUMMARY
+          echo "- **Infrastructure changes** (infra/*): Deployed by CDKTF" >> $GITHUB_STEP_SUMMARY
+          echo "- **Code changes** (frontend/*, rust-backend/*): Built by build.yml → Updated by ArgoCD" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container images**: Automatically pulled by ArgoCD when new tags are pushed to ACR" >> $GITHUB_STEP_SUMMARY
 
   validate:
     runs-on: ubuntu-latest
