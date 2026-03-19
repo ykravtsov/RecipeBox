@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: recipeboxacrdev.azurecr.io/recipebox-backend
+    repository: recipeboxacrdev.azurecr.io/recipebox-api
     tag: "latest"
     pullPolicy: Always
   replicaCount: 1
@@ -8,6 +8,12 @@ backend:
     type: LoadBalancer
     port: 80
     targetPort: 3000
+  database:
+    url: "postgres://pgadmin:Postgre$123!@recipebox-pg-dev.postgres.database.azure.com/recipebox?sslmode=require"
+  jwt:
+    secret: "development-jwt-secret-key-for-testing-only"
+  xai:
+    apiKey: "dummy-key-for-development"
   resources: {}
     # limits:
     #   cpu: 100m
