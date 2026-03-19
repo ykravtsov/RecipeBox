@@ -12,6 +12,8 @@ spec:
       labels:
         app: {{ include "recipebox.name" . }}-backend
     spec:
+      imagePullSecrets:
+      - name: acr-secret
       containers:
       - name: backend
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
@@ -36,3 +38,28 @@ spec:
               key: XAI_API_KEY
         resources:
           {{- toYaml .Values.backend.resources | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "recipebox.fullname" . }}-frontend
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "recipebox.name" . }}-frontend
+  template:
+    metadata:
+      labels:
+        app: {{ include "recipebox.name" . }}-frontend
+    spec:
+      imagePullSecrets:
+      - name: acr-secret
+      containers:
+      - name: frontend
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 12 }}

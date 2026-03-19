@@ -10,3 +10,16 @@ spec:
     protocol: TCP
   selector:
     app: {{ include "recipebox.name" . }}-backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "recipebox.fullname" . }}-frontend
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+  - port: {{ .Values.frontend.service.port }}
+    targetPort: {{ .Values.frontend.service.targetPort }}
+    protocol: TCP
+  selector:
+    app: {{ include "recipebox.name" . }}-frontend

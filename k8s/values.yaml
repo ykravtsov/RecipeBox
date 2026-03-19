@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: recipeboxacr.azurecr.io/recipebox-backend
+    repository: recipeboxacrdev.azurecr.io/recipebox-backend
     tag: "latest"
     pullPolicy: Always
   replicaCount: 1
@@ -8,6 +8,24 @@ backend:
     type: LoadBalancer
     port: 80
     targetPort: 3000
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+frontend:
+  image:
+    repository: recipeboxacrdev.azurecr.io/recipebox-frontend
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 1
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 80
   resources: {}
     # limits:
     #   cpu: 100m
