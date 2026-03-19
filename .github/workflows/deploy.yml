@@ -65,6 +65,11 @@ jobs:
         working-directory: infra
         run: npm install
 
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
       - name: Build CDKTF
         working-directory: infra
         run: npm run build
