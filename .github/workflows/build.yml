@@ -1,6 +1,7 @@
 name: Build and Push Container Images
 
 on:
+  # Trigger on code changes
   push:
     branches:
       - main
@@ -16,6 +17,12 @@ on:
       - 'frontend/**'
       - 'rust-backend/**'
       - 'docker-compose.yml'
+  # Wait for infrastructure deployment to complete first (prevents race conditions)
+  workflow_run:
+    workflows: ['Deploy Infrastructure']
+    types: ['completed']
+    branches: [main]
+  # Manual trigger
   workflow_dispatch:
     inputs:
       environment:
@@ -31,6 +38,11 @@ on:
 permissions:
   contents: read
   id-token: write
+
+# Prevent duplicate concurrent builds
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   changes:

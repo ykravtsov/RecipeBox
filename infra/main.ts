@@ -188,7 +188,7 @@ class MyStack extends TerraformStack {
 
         const cdnProfile = new CdnProfile(this, "cdnProfile", {
             name: `recipebox-cdn-${config.name}`,
-            location: rg.location,
+            location: "Global",
             resourceGroupName: rg.name,
             sku: config.cdnSku,
             tags: config.tags,
@@ -197,7 +197,7 @@ class MyStack extends TerraformStack {
         const cdnEndpoint = new CdnEndpoint(this, "cdnEndpoint", {
             name: `recipebox-frontend-${config.name}`,
             profileName: cdnProfile.name,
-            location: rg.location,
+            location: "Global",
             resourceGroupName: rg.name,
             origin: [{
                 name: "recipebox-origin",
@@ -264,6 +264,7 @@ class MyStack extends TerraformStack {
             scope: acr.id,
             roleDefinitionName: "AcrPull",
             principalId: aks.kubeletIdentity.objectId,
+            dependsOn: [aks],
         });
 
         // Kubernetes provider
@@ -272,6 +273,7 @@ class MyStack extends TerraformStack {
             clientCertificate: aks.kubeConfig.get(0).clientCertificate,
             clientKey: aks.kubeConfig.get(0).clientKey,
             clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
+            insecure: false,
         });
 
         // Helm provider
