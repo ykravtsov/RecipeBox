@@ -1,0 +1,171 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Deployment action'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'infra/package-lock.json'
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            ENV="dev"
+          fi
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        working-directory: infra
+        run: npm install
+
+      - name: Build CDKTF
+        working-directory: infra
+        run: npm run build
+
+      - name: Generate Terraform configuration
+        working-directory: infra
+        env:
+          ENVIRONMENT: ${{ steps.env.outputs.environment }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: npx cdktf synth
+
+      - name: Plan infrastructure
+        working-directory: infra
+        env:
+          ENVIRONMENT: ${{ steps.env.outputs.environment }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.action }}" == "apply" ]]; then
+            echo "Skipping plan, will apply directly"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.action }}" == "destroy" ]]; then
+            echo "Skipping plan, will destroy directly"
+          else
+            npx cdktf plan recipebox-infra
+          fi
+
+      - name: Apply infrastructure (automatic for main branch)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: infra
+        env:
+          ENVIRONMENT: dev
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: npx cdktf deploy recipebox-infra --auto-approve
+
+      - name: Apply infrastructure (manual trigger)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+        working-directory: infra
+        env:
+          ENVIRONMENT: ${{ steps.env.outputs.environment }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: npx cdktf deploy recipebox-infra --auto-approve
+
+      - name: Destroy infrastructure
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        working-directory: infra
+        env:
+          ENVIRONMENT: ${{ steps.env.outputs.environment }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: npx cdktf destroy recipebox-infra --auto-approve
+
+      - name: Get deployment outputs
+        if: success()
+        working-directory: infra
+        env:
+          ENVIRONMENT: ${{ steps.env.outputs.environment }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          echo "## Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          npx cdktf output recipebox-infra >> $GITHUB_STEP_SUMMARY 2>&1 || true
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'infra/package-lock.json'
+
+      - name: Validate TypeScript
+        working-directory: infra
+        run: |
+          npm install
+          npm run build
+
+      - name: Lint infrastructure code
+        working-directory: infra
+        run: |
+          if [ -f ".eslintrc.json" ]; then
+            npx eslint src --max-warnings 0 || true
+          fi
