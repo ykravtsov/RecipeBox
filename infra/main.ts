@@ -10,10 +10,6 @@ import { ResourceGroup } from "@cdktf/provider-azurerm/lib/resource-group";
 import { ContainerRegistry } from "@cdktf/provider-azurerm/lib/container-registry";
 import { KubernetesCluster } from "@cdktf/provider-azurerm/lib/kubernetes-cluster";
 import { RoleAssignment } from "@cdktf/provider-azurerm/lib/role-assignment";
-import { KubernetesProvider } from "@cdktf/provider-kubernetes/lib/provider";
-import { HelmProvider } from "@cdktf/provider-helm/lib/provider";
-import { Namespace } from "@cdktf/provider-kubernetes/lib/namespace";
-import { Release } from "@cdktf/provider-helm/lib/release";
 import { PostgresqlFlexibleServer } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server";
 import { PostgresqlFlexibleServerDatabase } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-database";
 import { PostgresqlFlexibleServerFirewallRule } from "@cdktf/provider-azurerm/lib/postgresql-flexible-server-firewall-rule";
@@ -264,51 +260,11 @@ class MyStack extends TerraformStack {
             scope: acr.id,
             roleDefinitionName: "AcrPull",
             principalId: aks.kubeletIdentity.objectId,
-            dependsOn: [aks],
         });
 
-        // Kubernetes provider
-        new KubernetesProvider(this, "k8s", {
-            host: aks.kubeConfig.get(0).host,
-            clientCertificate: aks.kubeConfig.get(0).clientCertificate,
-            clientKey: aks.kubeConfig.get(0).clientKey,
-            clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
-            insecure: false,
-        });
-
-        // Helm provider
-        new HelmProvider(this, "helm", {
-            kubernetes: {
-                host: aks.kubeConfig.get(0).host,
-                clientCertificate: aks.kubeConfig.get(0).clientCertificate,
-                clientKey: aks.kubeConfig.get(0).clientKey,
-                clusterCaCertificate: aks.kubeConfig.get(0).clusterCaCertificate,
-            },
-        });
-
-        // ArgoCD namespace
-        new Namespace(this, "argocd-ns", {
-            metadata: {
-                name: "argocd",
-            },
-        });
-
-        // ArgoCD Helm release
-        new Release(this, "argocd", {
-            name: "argocd",
-            repository: "https://argoproj.github.io/argo-helm",
-            chart: "argo-cd",
-            namespace: "argocd",
-            set: [
-                {
-                    name: "server.service.type",
-                    value: "LoadBalancer",
-                },
-            ],
-        });
-
-        // Note: ArgoCD Application resources are managed by GitOps (in k8s/application.yaml)
-        // This allows ArgoCD to manage itself and prevents timing issues during initial deployment
+        // NOTE: ArgoCD is deployed separately after cluster is ready
+        // See: k8s/application.yaml for ArgoCD configuration
+        // Use: kubectl apply -f k8s/application.yaml after cluster creation
 
         // Outputs
         new TerraformOutput(this, "environment", {
