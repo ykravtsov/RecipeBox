@@ -69,6 +69,10 @@ jobs:
         working-directory: infra
         run: npm run build
 
+      - name: Get CDKTF providers
+        working-directory: infra
+        run: npm run get
+
       - name: Generate Terraform configuration
         working-directory: infra
         env:
