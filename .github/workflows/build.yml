@@ -151,6 +151,14 @@ jobs:
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
 
+      - name: Login to ACR (backend)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.acr.outputs.registry }}
+          username: ${{ steps.acr.outputs.username }}
+          password: ${{ steps.acr.outputs.password }}
+
       - name: Build and push backend image
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v4
@@ -158,9 +166,6 @@ jobs:
           context: rust-backend
           file: rust-backend/Dockerfile
           push: true
-          registry: ${{ steps.acr.outputs.registry }}
-          username: ${{ steps.acr.outputs.username }}
-          password: ${{ steps.acr.outputs.password }}
           tags: |
             ${{ steps.acr.outputs.registry }}/recipebox-api:${{ steps.meta.outputs.tag }}
             ${{ steps.acr.outputs.registry }}/recipebox-api:latest
@@ -255,6 +260,14 @@ jobs:
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
 
+      - name: Login to ACR (frontend)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.acr.outputs.registry }}
+          username: ${{ steps.acr.outputs.username }}
+          password: ${{ steps.acr.outputs.password }}
+
       - name: Build and push frontend image
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v4
@@ -262,9 +275,6 @@ jobs:
           context: frontend
           file: frontend/Dockerfile
           push: true
-          registry: ${{ steps.acr.outputs.registry }}
-          username: ${{ steps.acr.outputs.username }}
-          password: ${{ steps.acr.outputs.password }}
           tags: |
             ${{ steps.acr.outputs.registry }}/recipebox-frontend:${{ steps.meta.outputs.tag }}
             ${{ steps.acr.outputs.registry }}/recipebox-frontend:latest
