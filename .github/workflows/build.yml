@@ -133,14 +133,27 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Login to ACR with Azure CLI (backend)
+      - name: Get ACR token (backend)
         if: github.event_name != 'pull_request'
         id: acr
         run: |
           REGISTRY="recipeboxacr${{ steps.meta.outputs.environment }}.azurecr.io"
           ACR_NAME="recipeboxacr${{ steps.meta.outputs.environment }}"
-          az acr login --name "$ACR_NAME"
+          
+          # Get access token from ACR
+          TOKEN=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+          
           echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "username=00000000-0000-0000-0000-000000000000" >> $GITHUB_OUTPUT
+          echo "password=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Login to ACR (backend)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.acr.outputs.registry }}
+          username: ${{ steps.acr.outputs.username }}
+          password: ${{ steps.acr.outputs.password }}
 
       - name: Build and push backend image
         if: github.event_name != 'pull_request'
@@ -225,14 +238,27 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Login to ACR with Azure CLI (frontend)
+      - name: Get ACR token (frontend)
         if: github.event_name != 'pull_request'
         id: acr
         run: |
           REGISTRY="recipeboxacr${{ steps.meta.outputs.environment }}.azurecr.io"
           ACR_NAME="recipeboxacr${{ steps.meta.outputs.environment }}"
-          az acr login --name "$ACR_NAME"
+          
+          # Get access token from ACR
+          TOKEN=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+          
           echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "username=00000000-0000-0000-0000-000000000000" >> $GITHUB_OUTPUT
+          echo "password=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Login to ACR (frontend)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.acr.outputs.registry }}
+          username: ${{ steps.acr.outputs.username }}
+          password: ${{ steps.acr.outputs.password }}
 
       - name: Build and push frontend image
         if: github.event_name != 'pull_request'
