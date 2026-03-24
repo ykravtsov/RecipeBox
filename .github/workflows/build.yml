@@ -133,6 +133,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set up kubectl
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: azure/setup-kubectl@v3
+
       - name: Get ACR token (backend)
         if: github.event_name != 'pull_request'
         id: acr
@@ -165,6 +169,16 @@ jobs:
           tags: |
             ${{ steps.acr.outputs.registry }}/recipebox-api:${{ steps.meta.outputs.tag }}
             ${{ steps.acr.outputs.registry }}/recipebox-api:latest
+
+      - name: Rollout restart backend deployment
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          RG_NAME="rg-recipebox-${{ steps.meta.outputs.environment }}"
+          AKS_NAME="recipebox-aks-${{ steps.meta.outputs.environment }}"
+          az aks get-credentials --resource-group "$RG_NAME" --name "$AKS_NAME" --overwrite-existing
+          kubectl rollout restart deployment -l app.kubernetes.io/component=backend || \
+          kubectl rollout restart deployment/recipebox-backend 2>/dev/null || true
+          echo "✓ Backend rollout restart triggered"
 
       - name: Build backend image (PR)
         if: github.event_name == 'pull_request'
@@ -238,6 +252,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set up kubectl
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: azure/setup-kubectl@v3
+
       - name: Get ACR token (frontend)
         if: github.event_name != 'pull_request'
         id: acr
@@ -270,6 +288,16 @@ jobs:
           tags: |
             ${{ steps.acr.outputs.registry }}/recipebox-frontend:${{ steps.meta.outputs.tag }}
             ${{ steps.acr.outputs.registry }}/recipebox-frontend:latest
+
+      - name: Rollout restart frontend deployment
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          RG_NAME="rg-recipebox-${{ steps.meta.outputs.environment }}"
+          AKS_NAME="recipebox-aks-${{ steps.meta.outputs.environment }}"
+          az aks get-credentials --resource-group "$RG_NAME" --name "$AKS_NAME" --overwrite-existing
+          kubectl rollout restart deployment -l app.kubernetes.io/component=frontend || \
+          kubectl rollout restart deployment/recipebox-frontend 2>/dev/null || true
+          echo "✓ Frontend rollout restart triggered"
 
       - name: Build frontend image (PR)
         if: github.event_name == 'pull_request'
