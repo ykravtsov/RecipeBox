@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,10 +13,9 @@ import { Recipe, Ingredient } from '../models/recipe';
 import { ImportRecipeDialogComponent } from '../import-recipe-dialog/import-recipe-dialog.component';
 
 @Component({
-  selector: 'app-recipe-add',
-  standalone: true,
-  imports: [
-    CommonModule,
+    standalone: true,
+    selector: 'app-recipe-add',
+    imports: [
     ReactiveFormsModule,
     RouterLink,
     MatCardModule,
@@ -25,9 +24,9 @@ import { ImportRecipeDialogComponent } from '../import-recipe-dialog/import-reci
     MatButtonModule,
     MatIconModule,
     MatDialogModule
-  ],
-  templateUrl: './recipe-add.component.html',
-  styleUrl: './recipe-add.component.scss'
+],
+    templateUrl: './recipe-add.component.html',
+    styleUrl: './recipe-add.component.scss'
 })
 export class RecipeAddComponent implements OnInit {
   recipeForm!: FormGroup;

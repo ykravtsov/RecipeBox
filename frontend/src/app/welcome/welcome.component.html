@@ -1,29 +1,235 @@
-<mat-card class="welcome-card">
-  <mat-card-header>
-    <mat-card-title>Welcome to RecipeBox</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <p>
-      Discover, organize, and share your favorite recipes with RecipeBox. Import
-      recipes from any website, add your own creations, and keep everything in
-      one convenient place.
-    </p>
-    <p>
-      Whether you're a home cook or a professional chef, RecipeBox helps you
-      build your personal recipe collection effortlessly.
-    </p>
-    <div class="features">
-      <h3>Key Features</h3>
-      <ul>
-        <li>Import recipes from websites with one click</li>
-        <li>Add and edit your own recipes</li>
-        <li>Organize recipes with tags and categories</li>
-        <li>Share recipes with friends and family</li>
-      </ul>
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-xl">
+  <div class="flex justify-between items-center px-6 md:px-16 py-6 max-w-[1440px] mx-auto">
+    <div class="text-2xl font-headline font-black text-primary">RecipeBox</div>
+    <div class="hidden md:flex items-center space-x-12">
+      <a class="text-primary border-b-2 border-[#496455] pb-1 font-headline font-bold tracking-tight" href="#">Our Story</a>
+      <a class="text-on-surface-variant font-headline font-bold tracking-tight hover:text-primary transition-colors duration-300" href="#">Features</a>
+      <a class="text-on-surface-variant font-headline font-bold tracking-tight hover:text-primary transition-colors duration-300" href="#">Kitchen Library</a>
     </div>
-  </mat-card-content>
-  <mat-card-actions>
-    <button mat-raised-button color="primary" routerLink="/login">Login</button>
-    <button mat-raised-button routerLink="/register">Sign Up</button>
-  </mat-card-actions>
-</mat-card>
+    <div class="flex items-center space-x-6">
+      <a class="text-primary font-headline font-bold tracking-tight hover:text-primary/70 transition-colors" href="#auth-section">Log In</a>
+      <a class="editorial-gradient text-on-primary px-6 py-2.5 rounded-lg font-headline font-bold tracking-tight shadow-sm active:scale-95 transition-all duration-200" href="#auth-section">Sign Up</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <!-- Hero Section -->
+  <section class="relative min-h-[921px] flex items-center pt-24 pb-32 overflow-hidden">
+    <div class="absolute inset-0 z-0">
+      <img alt="Gourmet table setting" class="w-full h-full object-cover opacity-90 scale-105"
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAF_E5aNa0aMvDlS54j9EhxWo1OFw9BRm0nfv4uFpJeL8a_VfWDjLtI-Hb4lI-04_9egJrudFMujrTAwwKKDG45fmiWTJpN0SOJ_2tk9gJbuIlhldXABNDwLBLVaiTpqubhx06z3VMCTDRXbXzI1zrrfwVzKm2gsREQsiqBETYXTvpV5YvdldXwxkOProSwQHvCL2Jgc84mpwyeLuht4_C8boZz31too49pjczoA9guoBohDfJwxuY3M6aTkuiDPUkArT_nuVtoyR7"/>
+      <div class="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent"></div>
+    </div>
+    <div class="relative z-10 px-6 md:px-20 max-w-[1440px] mx-auto w-full">
+      <div class="max-w-2xl">
+        <span class="inline-block py-1 px-4 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold tracking-widest uppercase mb-6">Established 2026</span>
+        <h1 class="text-5xl md:text-8xl font-headline font-black text-primary leading-[1.1] tracking-tighter mb-8">
+          The Digital Sommelier <br/><span class="italic font-normal">for Your Kitchen.</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-on-surface-variant max-w-lg mb-12 font-light leading-relaxed">
+          Curate your culinary legacy with elegant organization and AI-powered intelligence. Your recipes, refined.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <a href="#auth-section" class="editorial-gradient text-on-primary text-lg px-10 py-5 rounded-lg font-headline font-bold shadow-xl hover:shadow-2xl transition-all text-center">Join for Free</a>
+          <a routerLink="/recipes" class="bg-white/40 backdrop-blur-md border border-outline-variant/20 text-primary text-lg px-10 py-5 rounded-lg font-headline font-bold hover:bg-white/60 transition-all text-center">Explore Library</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Bento Grid -->
+  <section class="py-32 px-6 md:px-20 bg-surface-container-low">
+    <div class="max-w-[1440px] mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+        <div class="max-w-xl">
+          <h2 class="text-4xl md:text-5xl font-headline font-black text-primary mb-6">Designed for the Modern Epicurean</h2>
+          <p class="text-on-surface-variant text-lg">Every detail crafted to elevate your cooking experience from a task to an art form.</p>
+        </div>
+        <div class="h-[1px] flex-grow bg-outline-variant/20 mx-12 hidden md:block mb-4"></div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Feature 1: AI Imports -->
+        <div class="md:col-span-7 group bg-surface-container-lowest p-10 rounded-xl relative overflow-hidden transition-all duration-500 hover:scale-[1.01]">
+          <div class="relative z-10 h-full flex flex-col justify-between">
+            <div>
+              <span class="material-symbols-outlined text-[#496455] text-4xl mb-6 block">auto_awesome</span>
+              <h3 class="text-3xl font-headline font-bold text-primary mb-4">AI-Powered URL Imports</h3>
+              <p class="text-on-surface-variant max-w-sm leading-relaxed">Simply paste a link. We strip the fluff and keep the flavor, instantly formatting instructions and ingredients into a clean, editorial layout.</p>
+            </div>
+            <div class="mt-12 flex items-center gap-2 text-[#496455] font-bold group-hover:gap-4 transition-all cursor-pointer">
+              Learn more <span class="material-symbols-outlined">arrow_forward</span>
+            </div>
+          </div>
+          <div class="absolute right-[-10%] bottom-[-10%] w-2/3 opacity-20 group-hover:opacity-40 transition-opacity">
+            <img alt="Kitchen scene" class="rounded-full aspect-square object-cover"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuArTzq3mibI_Is-KAFV2-x_loDm0cVaDyJvc0wHnsgxFkOw2RzVThSc92dwDqg9MQrE_DxzgHc0xqr7yyVxOjfL_4KyTyUQQPEFr3rQBCdVyy-PSyFFWM2BtWWmwl7aqk9ZmbDovGeJ59rFY3YWzR_29UMB81mZX7yo6kO2xglOD-ZPDKl53uWKcJM2CVtIIu0UCBAy2Qgpgw386UTdg7GysJWkvqSgJUIpflIQcptrNnIiMnXj5YC1gRc-JWhDsO43tk-JtUXtUAA4"/>
+          </div>
+        </div>
+        <!-- Feature 2: Beautiful Collections -->
+        <div class="md:col-span-5 bg-primary p-10 rounded-xl text-on-primary flex flex-col justify-between relative overflow-hidden">
+          <div class="relative z-10">
+            <span class="material-symbols-outlined text-[#b0cdbb] text-4xl mb-6 block">folder_special</span>
+            <h3 class="text-3xl font-headline font-bold mb-4">Beautiful Collections</h3>
+            <p class="text-[#7d9988] leading-relaxed">Organize your repertoire into stunning digital cookbooks. From "Sunday Sauce" to "Summer Grilling".</p>
+          </div>
+          <div class="relative z-10 mt-12 flex -space-x-4">
+            <div class="w-16 h-16 rounded-lg border-2 border-primary overflow-hidden bg-surface-dim">
+              <img alt="Food" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeG7aDJ4k_dtVIhJIzngAar_n7MSwwYDteCX-N0hkVbJG-jmBOWYvmiygZv_G09x7HtFtBG9a8sjvqql2jRoJNFO8H3JxCxeVZeH2OQdUHEjST_HcYzorc00gVldUSHMDoH1eFMCOzme8anDcpOgeKeK1Jm9FvQX5NQLu6X7gJADfnZb5YCJgfKFBBXtFfk1Gf4Z5eScNB3RiFd2ZcXMlHw-aWWzoCYIHHxLhkdRx59aMRqHM2734ypEYIwi4DagKkuW2nhpq4tWgq"/>
+            </div>
+            <div class="w-16 h-16 rounded-lg border-2 border-primary overflow-hidden bg-surface-dim">
+              <img alt="Food" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4x5ygoDurE4DtxBriZjigsoVDZDntZHJ_Mhq31tz_7BD4eYbW2meQNtJKsa6Icf-kCMkR7oKpJOyl3UwnXK_a7I0FMJl35-M9QXT3i2nvPesl_gNHSNOEp8zhp2r08Ght4zfLO64VMuEjZBG0yuqD7qTalNgifnn1qwAuH-d-3DuCfwhtukxPlXeayoOLUITPR29KbtxTr9nyJLJKt-_hoKt0103dz2o_4_av9FKe-KGX9bUigaHjHRyjdSiW10k7lzLEvUHJRHgs"/>
+            </div>
+            <div class="w-16 h-16 rounded-lg border-2 border-primary overflow-hidden bg-surface-dim">
+              <img alt="Food" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXRS62axkff05jwrB5nqWkXr1IUhACzPqg02qndJ2PmoBFcGmn0UlnrdZqwQvUCpzcRCRFmwA03QbygDbld1BFTf6icX9ZA48H_6J9OXkEz-CS0GzmCh219mXazCkSMUjDZfO6KKtP6qd3vOnqpS_hDFsXSx7F5MEE8H8Up4C8mBTk-wc1BxsFgAnO-ZhciujKLowdVlnyoX2QmdwKJE-ke5gaXjgkFmFkFYnZMckthS1GFntCneiDX4kEfYrtkuH1FCe-fYbMjXGC"/>
+            </div>
+            <div class="w-16 h-16 rounded-lg border-2 border-primary flex items-center justify-center bg-primary-container text-[#b0cdbb] text-xs font-bold">+12</div>
+          </div>
+          <div class="absolute top-0 right-0 w-full h-full editorial-gradient opacity-50"></div>
+        </div>
+        <!-- Feature 3: Kitchen Mode -->
+        <div class="md:col-span-12 bg-surface-container p-10 rounded-xl flex flex-col md:flex-row items-center gap-12 overflow-hidden">
+          <div class="flex-1">
+            <span class="material-symbols-outlined text-[#496455] text-4xl mb-6 block">restaurant_menu</span>
+            <h3 class="text-3xl font-headline font-bold text-primary mb-4">Mobile-First Kitchen Mode</h3>
+            <p class="text-on-surface-variant text-lg leading-relaxed mb-8">No more squinting at your screen while you're at the stove. Our immersive Kitchen Mode features large, legible text and hands-free navigation.</p>
+            <div class="flex gap-4">
+              <div class="bg-surface-container-highest px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold text-primary">
+                <span class="material-symbols-outlined text-lg">check_circle</span> Large Text
+              </div>
+              <div class="bg-surface-container-highest px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold text-primary">
+                <span class="material-symbols-outlined text-lg">check_circle</span> Auto-Scaling
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 w-full max-w-sm bg-surface-container-lowest p-6 rounded-[2rem] shadow-2xl rotate-3 transform">
+            <div class="aspect-[9/16] bg-surface-container rounded-2xl overflow-hidden border-8 border-primary-container">
+              <div class="p-4 bg-primary text-on-primary">
+                <h4 class="font-headline font-bold">Pan-Seared Scallops</h4>
+                <p class="text-[10px] opacity-70">Step 2 of 5</p>
+              </div>
+              <div class="p-6">
+                <p class="text-2xl font-headline font-bold text-primary mb-4">Heat the pan until smoking hot...</p>
+                <div class="h-2 w-full bg-outline-variant/30 rounded-full mb-8">
+                  <div class="h-full w-2/5 bg-[#496455] rounded-full"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="aspect-square bg-surface-container-low rounded-lg"></div>
+                  <div class="aspect-square bg-surface-container-low rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Login & Registration Section -->
+  <section class="py-24 px-6 md:px-0 bg-surface" id="auth-section">
+    <div class="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 min-h-[700px] overflow-hidden rounded-3xl shadow-2xl">
+      <!-- Login Side -->
+      <div class="bg-surface-container-lowest p-12 md:p-20 flex flex-col justify-center">
+        <div class="max-w-md mx-auto w-full">
+          <h2 class="text-4xl font-headline font-bold text-primary mb-2">Welcome Back</h2>
+          <p class="text-on-surface-variant mb-10">Access your curated culinary library.</p>
+          <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-6">
+            <div>
+              <label class="block text-sm font-bold text-primary mb-2 uppercase tracking-widest">Email Address</label>
+              <input formControlName="loginEmail" class="w-full bg-surface-container-low border-none rounded-lg p-4 focus:ring-2 focus:ring-[#496455]/40 transition-all outline-none" placeholder="chef@recipebox.com" type="email"/>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-primary mb-2 uppercase tracking-widest">Password</label>
+              <input formControlName="loginPassword" class="w-full bg-surface-container-low border-none rounded-lg p-4 focus:ring-2 focus:ring-[#496455]/40 transition-all outline-none" placeholder="••••••••" type="password"/>
+            </div>
+            @if (loginError) {
+              <div class="text-error text-sm">{{ loginError }}</div>
+            }
+            <button class="w-full editorial-gradient text-on-primary py-4 rounded-lg font-headline font-bold text-lg shadow-lg hover:shadow-xl transition-all" type="submit">Sign In</button>
+            <p class="text-center text-sm text-on-surface-variant">Don't have an account? <a href="#auth-section" class="text-[#496455] font-bold hover:underline">Sign up →</a></p>
+          </form>
+        </div>
+      </div>
+      <!-- Registration Side -->
+      <div class="bg-primary p-12 md:p-20 flex flex-col justify-center relative overflow-hidden">
+        <div class="absolute inset-0 z-0">
+          <img alt="Luxury ingredients" class="w-full h-full object-cover opacity-20"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBct-kSdlrqPppFbRPvRUHAUvsCnaEYYuuLgEQX2Twon22s0JbTjTwLh6x061VVAvOi1GLgYJVcB4K94Vg4cPoGAy6MqTfIXUg7XQns57eFSPr85ANMedS5JNUKqQ11UQbMB4YCejLwLbBfcuXuKMPa9ErIdZ8VCj7kJGkWdIgHfeO_-7sEGB-uP320fFBO8etk2a8BZ2hJt-ZYyoeVdzqeSYf4DtRQ3AfEuiPmZFlNfMbQqBViTAbH3ie_YiFU6oltoNQHD5xaHege"/>
+        </div>
+        <div class="max-w-md mx-auto w-full relative z-10 text-on-primary">
+          <h2 class="text-4xl font-headline font-bold mb-2">Join the Reserve</h2>
+          <p class="text-[#7d9988] mb-10">Start your culinary journey today.</p>
+          <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="space-y-6">
+            <div>
+              <label class="block text-xs font-bold mb-2 uppercase tracking-widest opacity-80">Email Address</label>
+              <input formControlName="registerEmail" class="w-full bg-white/10 border-none rounded-lg p-4 text-white placeholder-white/40 focus:ring-2 focus:ring-[#b0cdbb] outline-none" placeholder="chef@recipebox.com" type="email"/>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-2 uppercase tracking-widest opacity-80">Choose Password</label>
+              <input formControlName="registerPassword" class="w-full bg-white/10 border-none rounded-lg p-4 text-white placeholder-white/40 focus:ring-2 focus:ring-[#b0cdbb] outline-none" placeholder="••••••••" type="password"/>
+            </div>
+            @if (registerError) {
+              <div class="text-[#ffdad6] text-sm">{{ registerError }}</div>
+            }
+            <button class="w-full bg-[#ccead6] text-[#062014] py-4 rounded-lg font-headline font-bold text-lg shadow-lg hover:bg-white transition-all" type="submit">Create Account</button>
+          </form>
+          <p class="mt-8 text-sm text-[#7d9988] text-center italic">"The secret of success is constancy of purpose."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Social Proof -->
+  <section class="py-24 bg-surface-container-lowest">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-20">
+      <p class="text-center text-xs font-bold uppercase tracking-[0.3em] text-outline mb-12">The World's Finest Are Cooking With Us</p>
+      <div class="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-60 grayscale hover:grayscale-0 transition-all duration-700">
+        <span class="text-2xl font-headline font-black text-primary italic">Epicurean</span>
+        <span class="text-2xl font-headline font-bold text-primary">GASTRONOMY</span>
+        <span class="text-2xl font-headline font-light text-primary tracking-widest">bon appétit</span>
+        <span class="text-2xl font-headline font-black text-primary">Cuisine.</span>
+        <span class="text-2xl font-headline font-bold text-primary italic">Sommelier Daily</span>
+      </div>
+      <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div class="text-center p-8">
+          <div class="text-[#496455] mb-6">
+            <span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;">format_quote</span>
+          </div>
+          <p class="text-xl font-headline italic text-primary leading-relaxed mb-6">"Finally, a recipe manager that treats cooking like an art form rather than a utility chore. Beautifully designed."</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">— Elena Rossi, Chef de Cuisine</p>
+        </div>
+        <div class="text-center p-8 bg-surface-container-low rounded-2xl">
+          <div class="text-[#496455] mb-6">
+            <span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;">format_quote</span>
+          </div>
+          <p class="text-xl font-headline italic text-primary leading-relaxed mb-6">"The AI import feature is revolutionary. I saved years of messy bookmarks in a single afternoon."</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">— Marcus Thorne, Food Critic</p>
+        </div>
+        <div class="text-center p-8">
+          <div class="text-[#496455] mb-6">
+            <span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;">format_quote</span>
+          </div>
+          <p class="text-xl font-headline italic text-primary leading-relaxed mb-6">"Kitchen mode is a game changer. Hands-free cooking is exactly what my digital workflow was missing."</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">— Sarah Jenkins, Home Cook</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer class="bg-[#efeeea] border-t border-[#c3c8c1]/20">
+  <div class="flex flex-col md:flex-row justify-between items-center px-20 py-12 w-full max-w-[1440px] mx-auto">
+    <div class="flex flex-col gap-4 mb-8 md:mb-0">
+      <div class="text-lg font-headline font-bold text-primary">RecipeBox</div>
+      <p class="font-body text-sm tracking-wide text-on-surface-variant max-w-xs">© 2026 RecipeBox. Crafted for the Digital Sommelier.</p>
+    </div>
+    <div class="flex flex-wrap justify-center gap-8 md:gap-12">
+      <a class="font-body text-sm tracking-wide text-on-surface-variant hover:underline decoration-[#496455] transition-all" href="#">Privacy Policy</a>
+      <a class="font-body text-sm tracking-wide text-on-surface-variant hover:underline decoration-[#496455] transition-all" href="#">Terms of Service</a>
+      <a class="font-body text-sm tracking-wide text-on-surface-variant hover:underline decoration-[#496455] transition-all" href="#">Contact Us</a>
+      <a class="font-body text-sm tracking-wide text-on-surface-variant hover:underline decoration-[#496455] transition-all" href="#">Instagram</a>
+    </div>
+  </div>
+</footer>

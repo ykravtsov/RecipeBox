@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,10 +12,9 @@ import { RecipeService } from '../services/recipe.service';
 import { Recipe } from '../models/recipe';
 
 @Component({
-  selector: 'app-import-recipe-dialog',
-  standalone: true,
-  imports: [
-    CommonModule,
+    standalone: true,
+    selector: 'app-import-recipe-dialog',
+    imports: [
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -23,9 +22,9 @@ import { Recipe } from '../models/recipe';
     MatProgressSpinnerModule,
     MatCardModule,
     FormsModule
-  ],
-  templateUrl: './import-recipe-dialog.component.html',
-  styleUrl: './import-recipe-dialog.component.scss'
+],
+    templateUrl: './import-recipe-dialog.component.html',
+    styleUrl: './import-recipe-dialog.component.scss'
 })
 export class ImportRecipeDialogComponent {
   url: string = '';

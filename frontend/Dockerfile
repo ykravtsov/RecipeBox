@@ -1,18 +1,19 @@
 # Development stage
-FROM node:18 AS development
+FROM node:20 AS development
 WORKDIR /app
-RUN apt-get update && apt-get install -y chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . .
 EXPOSE 4200
 CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--proxy-config", "proxy.conf.json", "--disable-host-check"]
 
 # Build stage
-FROM node:18 AS build
+FROM node:20 AS build
 WORKDIR /app
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . .
 RUN npm run build
 

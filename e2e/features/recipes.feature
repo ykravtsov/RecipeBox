@@ -10,13 +10,13 @@ Feature: Recipes
 
     Scenario: Navigate to add recipe page
         Given I am on the recipes page
-        When I click the "Add New Recipe" button
+        When I click the "Add Recipe" button
         Then I should be redirected to the add recipe page
 
     Scenario: Navigate to recipe details
         Given I have created a recipe
         Given I am on the recipes page
-        When I click the "View Details" button on the first recipe
+        When I click the "View Recipe" button on the first recipe
         Then I should be redirected to the recipe detail page
 
     Scenario: Add a new recipe manually
@@ -42,6 +42,5 @@ Feature: Recipes
          Given I have created a recipe with tags "italian,pasta"
          Given I am on the recipes page
          When I enter "italian" in the search input and press Enter
-         And I click the "Search" button
          Then I should see the recipe with tags "italian,pasta" in the list
          And I should not see other recipes

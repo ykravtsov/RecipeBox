@@ -6,7 +6,7 @@
       matInput
       [(ngModel)]="url"
       placeholder="https://example.com/recipe"
-    />
+      />
   </mat-form-field>
 
   <div class="actions">
@@ -15,40 +15,48 @@
       color="primary"
       (click)="scrapeRecipe()"
       [disabled]="!url || isLoading"
-    >
-      <span *ngIf="!isLoading">Scrape Recipe</span>
-      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+      >
+      @if (!isLoading) {
+        <span>Scrape Recipe</span>
+      }
+      @if (isLoading) {
+        <mat-spinner diameter="20"></mat-spinner>
+      }
     </button>
   </div>
 
-  <div *ngIf="scrapedRecipe" class="scraped-recipe">
-    <h3>{{ scrapedRecipe.title }}</h3>
-    <p>{{ scrapedRecipe.description }}</p>
-
-    <h4>Ingredients:</h4>
-    <ul>
-      <li *ngFor="let ingredient of scrapedRecipe.ingredients">
-        {{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}
-      </li>
-    </ul>
-
-    <h4>Steps:</h4>
-    <ol>
-      <li *ngFor="let step of scrapedRecipe.steps">{{ step }}</li>
-    </ol>
-
-    <h4>Select an Image:</h4>
-    <div class="image-selection">
-      <div
-        class="image-option"
-        *ngFor="let imageUrl of scrapedRecipe?.imageUrls || []"
-        [class.selected]="selectedImageUrl === imageUrl"
-        (click)="selectImage(imageUrl)"
-      >
-        <img [src]="imageUrl" alt="Recipe image option" />
+  @if (scrapedRecipe) {
+    <div class="scraped-recipe">
+      <h3>{{ scrapedRecipe.title }}</h3>
+      <p>{{ scrapedRecipe.description }}</p>
+      <h4>Ingredients:</h4>
+      <ul>
+        @for (ingredient of scrapedRecipe.ingredients; track ingredient) {
+          <li>
+            {{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}
+          </li>
+        }
+      </ul>
+      <h4>Steps:</h4>
+      <ol>
+        @for (step of scrapedRecipe.steps; track step) {
+          <li>{{ step }}</li>
+        }
+      </ol>
+      <h4>Select an Image:</h4>
+      <div class="image-selection">
+        @for (imageUrl of scrapedRecipe?.imageUrls || []; track imageUrl) {
+          <div
+            class="image-option"
+            [class.selected]="selectedImageUrl === imageUrl"
+            (click)="selectImage(imageUrl)"
+            >
+            <img [src]="imageUrl" alt="Recipe image option" />
+          </div>
+        }
       </div>
     </div>
-  </div>
+  }
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button (click)="cancel()">Cancel</button>
@@ -57,7 +65,7 @@
     color="primary"
     (click)="saveRecipe()"
     [disabled]="!scrapedRecipe"
-  >
+    >
     Use This Recipe
   </button>
 </mat-dialog-actions>

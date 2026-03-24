@@ -1,76 +1,204 @@
-<mat-card class="container">
-  <mat-card-header>
-    <mat-card-title *ngIf="!isEditMode">Recipe Details</mat-card-title>
-    <mat-card-title *ngIf="isEditMode">Edit Recipe</mat-card-title>
-  </mat-card-header>
-
-  <mat-card-content>
-    <div *ngIf="!isEditMode">
-      <div *ngIf="recipe.imageUrl" class="recipe-image">
-        <img [src]="recipe.imageUrl" [alt]="recipe.title" />
-      </div>
-      <p><strong>Title:</strong> {{ recipe.title }}</p>
-      <p><strong>Description:</strong> {{ recipe.description }}</p>
-
-      <div
-        *ngIf="recipe.ingredients && recipe.ingredients.length > 0"
-        class="ingredients-section"
-      >
-        <h3>Ingredients</h3>
-        <ul>
-          <li *ngFor="let ingredient of recipe.ingredients">
-            {{ ingredient.quantity }} {{ ingredient.unit }}
-            {{ ingredient.name }}
-          </li>
-        </ul>
-      </div>
-
-      <div
-        *ngIf="recipe.steps && recipe.steps.length > 0"
-        class="steps-section"
-      >
-        <h3>Instructions</h3>
-        <ol>
-          <li *ngFor="let step of recipe.steps">{{ step }}</li>
-        </ol>
-      </div>
-
-      <div class="button-group">
-        <button
-          mat-raised-button
-          color="accent"
-          routerLink="/recipe/{{ recipe.id }}/edit"
-        >
-          Edit
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-xl shadow-sm">
+  <div class="flex justify-between items-center px-8 py-4 max-w-[1440px] mx-auto w-full">
+    <div class="font-headline italic text-2xl text-primary">RecipeBox</div>
+    <nav class="hidden md:flex items-center space-x-8">
+      <a class="text-on-surface-variant font-medium hover:text-primary transition-colors" routerLink="/recipes">Discover</a>
+      <a class="text-primary font-bold border-b-2 border-[#496455] pb-1" routerLink="/recipes">My Box</a>
+    </nav>
+    <div class="flex items-center space-x-6">
+      @if (!isEditMode) {
+        <button class="hidden md:flex items-center px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-xl font-medium text-sm hover:scale-95 transition-transform duration-200"
+          [routerLink]="['/recipes/recipe', recipe.id, 'edit']">
+          Edit Recipe
         </button>
-        <button mat-raised-button color="warn" (click)="deleteRecipe()">
-          Delete
-        </button>
-        <button mat-button color="primary" routerLink="/">Back to List</button>
+      }
+      <a routerLink="/recipes" class="text-on-surface-variant cursor-pointer hover:bg-surface-container/50 p-2 rounded-lg transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="pt-20">
+  <!-- Hero Section -->
+  <section class="relative w-full h-[716px] min-h-[500px] overflow-hidden">
+    <img
+      [alt]="recipe.title"
+      [src]="recipe.imageUrl || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1400&q=80'"
+      class="w-full h-full object-cover"
+      />
+    <div class="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent"></div>
+    <div class="absolute bottom-0 left-0 w-full p-8 md:p-20 flex flex-col md:flex-row md:items-end justify-between gap-8">
+      <div class="max-w-3xl">
+        <div class="flex items-center space-x-2 mb-4">
+          <span class="material-symbols-outlined text-secondary-container" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;">star</span>
+          <span class="text-secondary-container font-medium tracking-wide text-sm">Recipe Details</span>
+          <span class="mx-3 text-[#7d9988]/40">|</span>
+          <span class="text-secondary-container font-medium tracking-wide text-sm uppercase">Main Course</span>
+        </div>
+        <h1 class="font-headline text-5xl md:text-7xl text-white leading-tight italic">{{ recipe.title }}</h1>
+        @if (recipe.description) {
+          <p class="text-white/80 text-xl mt-4 max-w-xl">{{ recipe.description }}</p>
+        }
+      </div>
+      <div class="glass-card p-6 rounded-2xl flex items-center space-x-8 text-white border border-white/10">
+        <div class="text-center">
+          <p class="text-[10px] uppercase tracking-[0.2em] opacity-70 mb-1">Ingredients</p>
+          <p class="font-bold text-xl">{{ recipe.ingredients.length }}</p>
+        </div>
+        <div class="w-px h-8 bg-white/20"></div>
+        <div class="text-center">
+          <p class="text-[10px] uppercase tracking-[0.2em] opacity-70 mb-1">Steps</p>
+          <p class="font-bold text-xl">{{ recipe.steps.length }}</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <form *ngIf="isEditMode" (ngSubmit)="saveRecipe()">
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Title</mat-label>
-        <input matInput [(ngModel)]="recipe.title" name="title" required />
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Description</mat-label>
-        <textarea
-          matInput
-          [(ngModel)]="recipe.description"
-          name="description"
-        ></textarea>
-      </mat-form-field>
-
-      <div class="button-group">
-        <button mat-raised-button color="primary" type="submit">Save</button>
-        <button mat-button color="accent" routerLink="/recipe/{{ recipe.id }}">
-          Cancel
-        </button>
+  <!-- Content Section -->
+  <section class="max-w-[1440px] mx-auto px-8 py-20">
+    <!-- Edit Mode -->
+    @if (isEditMode) {
+      <div class="max-w-2xl mx-auto">
+        <h2 class="font-headline text-3xl italic mb-10 text-primary">Edit Recipe</h2>
+        <form (ngSubmit)="saveRecipe()" class="space-y-6">
+          <div>
+            <label class="block text-sm font-bold text-primary mb-2 uppercase tracking-widest">Title</label>
+            <input [(ngModel)]="recipe.title" name="title" required
+              class="w-full bg-surface-container-low border-none rounded-xl p-4 focus:ring-2 focus:ring-[#496455]/40 transition-all outline-none text-on-surface"/>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-primary mb-2 uppercase tracking-widest">Description</label>
+            <textarea [(ngModel)]="recipe.description" name="description" rows="4"
+            class="w-full bg-surface-container-low border-none rounded-xl p-4 focus:ring-2 focus:ring-[#496455]/40 transition-all outline-none text-on-surface resize-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-primary mb-2 uppercase tracking-widest">Image URL</label>
+            <input [(ngModel)]="recipe.imageUrl" name="imageUrl"
+              class="w-full bg-surface-container-low border-none rounded-xl p-4 focus:ring-2 focus:ring-[#496455]/40 transition-all outline-none text-on-surface"/>
+          </div>
+          <div class="flex gap-4 pt-4">
+            <button type="submit" class="flex-1 bg-primary text-on-primary py-4 rounded-2xl font-headline font-bold text-lg hover:scale-95 transition-transform">
+              Save Changes
+            </button>
+            <a [routerLink]="['/recipes/recipe', recipe.id]"
+              class="flex-1 text-center bg-surface-container text-primary py-4 rounded-2xl font-headline font-bold text-lg hover:bg-surface-container-high transition-colors">
+              Cancel
+            </a>
+            <button type="button" (click)="deleteRecipe()"
+              class="bg-error-container text-on-error-container px-6 py-4 rounded-2xl font-bold hover:scale-95 transition-transform">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
-  </mat-card-content>
-</mat-card>
+    }
+
+    <!-- View Mode -->
+    @if (!isEditMode) {
+      <div class="flex flex-col lg:flex-row gap-20">
+        <!-- Left Column: Ingredients -->
+        <aside class="lg:w-1/3">
+          <div class="sticky top-32">
+            <div class="flex items-center justify-between mb-10">
+              <h2 class="font-headline text-3xl italic">Ingredients</h2>
+              <div class="flex space-x-2">
+                <button class="p-2 hover:bg-surface-container rounded-lg transition-colors">
+                  <span class="material-symbols-outlined text-primary">share</span>
+                </button>
+                <a [routerLink]="['/recipes/recipe', recipe.id, 'edit']" class="p-2 hover:bg-surface-container rounded-lg transition-colors block">
+                  <span class="material-symbols-outlined text-primary">edit</span>
+                </a>
+              </div>
+            </div>
+            @if (recipe.ingredients && recipe.ingredients.length > 0) {
+              <div class="space-y-4">
+                @for (ingredient of recipe.ingredients; track ingredient; let i = $index) {
+                  <label
+                    class="group flex items-center p-4 bg-surface-container-low hover:bg-surface-container rounded-2xl transition-all cursor-pointer"
+                    [class.opacity-50]="isChecked(i)"
+                    (click)="toggleIngredient(i)">
+                    <input
+                      type="checkbox"
+                      [checked]="isChecked(i)"
+                      class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 mr-4 accent-[#021c10]"
+                      (click)="$event.stopPropagation()"
+                      (change)="toggleIngredient(i)"
+                      />
+                    <span class="text-on-surface-variant group-hover:text-primary transition-colors"
+                      [class.line-through]="isChecked(i)">
+                      {{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}
+                    </span>
+                  </label>
+                }
+              </div>
+            }
+            @if (!recipe.ingredients || recipe.ingredients.length === 0) {
+              <div class="text-on-surface-variant text-sm italic p-4">
+                No ingredients listed.
+              </div>
+            }
+            <div class="mt-12 p-8 rounded-3xl bg-secondary-container/30 border border-secondary-container">
+              <h4 class="font-headline italic text-lg mb-2 text-primary">Chef's Tip</h4>
+              <p class="text-sm text-on-secondary-container leading-relaxed">Read through all the steps before you begin. Good mise en place makes the cooking process smooth and enjoyable.</p>
+            </div>
+          </div>
+        </aside>
+        <!-- Right Column: Instructions -->
+        <article class="lg:w-2/3">
+          <h2 class="font-headline text-3xl italic mb-12">Instructions</h2>
+          @if (recipe.steps && recipe.steps.length > 0) {
+            <div class="space-y-16">
+              @for (step of recipe.steps; track step; let i = $index) {
+                <div class="relative pl-16">
+                  <span class="absolute left-0 top-0 font-headline text-5xl text-primary-container/10 italic">{{ stepNumber(i) }}</span>
+                  <div class="space-y-4">
+                    <h3 class="font-headline text-xl text-primary">Step {{ i + 1 }}</h3>
+                    <p class="text-lg leading-relaxed text-on-surface-variant">{{ step }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          @if (!recipe.steps || recipe.steps.length === 0) {
+            <div class="text-on-surface-variant italic">
+              No instructions available.
+            </div>
+          }
+          <!-- Footer Actions -->
+          <div class="mt-24 pt-12 border-t border-surface-container flex flex-wrap gap-4">
+            <button class="flex items-center space-x-2 bg-primary text-white px-8 py-4 rounded-2xl hover:scale-105 transition-transform">
+              <span class="material-symbols-outlined">restaurant_menu</span>
+              <span class="font-bold">I Made This</span>
+            </button>
+            <button class="flex items-center space-x-2 bg-surface-container text-primary px-8 py-4 rounded-2xl hover:bg-surface-container-high transition-colors">
+              <span class="material-symbols-outlined">playlist_add</span>
+              <span class="font-bold">Add to Meal Plan</span>
+            </button>
+            <button (click)="deleteRecipe()" class="flex items-center space-x-2 bg-error-container text-on-error-container px-8 py-4 rounded-2xl hover:scale-95 transition-transform">
+              <span class="material-symbols-outlined">delete</span>
+              <span class="font-bold">Delete</span>
+            </button>
+          </div>
+        </article>
+      </div>
+    }
+  </section>
+</main>
+
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 md:hidden bg-[#fbf9f5] shadow-[0_-4px_20px_rgba(2,28,16,0.06)] pb-safe rounded-t-3xl z-50">
+  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2" routerLink="/recipes">
+    <span class="material-symbols-outlined">restaurant</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Feed</span>
+  </a>
+  <a class="flex flex-col items-center justify-center bg-secondary-container text-primary rounded-2xl px-5 py-2" href="#">
+    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;">style</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Saved</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2" href="#">
+    <span class="material-symbols-outlined">person</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Profile</span>
+  </a>
+</nav>

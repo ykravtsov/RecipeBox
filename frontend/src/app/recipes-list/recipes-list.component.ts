@@ -1,31 +1,33 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
+
+import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RecipeService } from '../services/recipe.service';
 import { MealService } from '../services/meal.service';
+import { AuthService } from '../services/auth.service';
 import { Recipe } from '../models/recipe';
-import { MealComponent } from '../meal/meal.component';
+import { ImportRecipeDialogComponent } from '../import-recipe-dialog/import-recipe-dialog.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
-  selector: 'app-recipes-list',
-  standalone: true,
-  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatChipsModule, MatIconModule, FormsModule, MealComponent],
-  templateUrl: './recipes-list.component.html',
-  styleUrl: './recipes-list.component.scss'
+    standalone: true,
+    selector: 'app-recipes-list',
+    imports: [RouterLink, FormsModule, MatDialogModule],
+    templateUrl: './recipes-list.component.html',
+    styleUrl: './recipes-list.component.scss'
 })
 export class RecipesListComponent implements OnInit {
   recipes: Recipe[] = [];
   searchQuery: string = '';
   searchTerms: string[] = [];
 
-  constructor(private recipeService: RecipeService, private mealService: MealService) { }
+  constructor(
+    private recipeService: RecipeService,
+    private mealService: MealService,
+    private authService: AuthService,
+    private router: Router,
+    private dialog: MatDialog
+  ) { }
 
   ngOnInit(): void {
     this.loadRecipes();
@@ -47,6 +49,7 @@ export class RecipesListComponent implements OnInit {
 
   removeSearchTerm(term: string): void {
     this.searchTerms = this.searchTerms.filter(t => t !== term);
+    if (this.searchTerms.length === 0) this.loadRecipes();
   }
 
   searchRecipes(): void {
@@ -68,5 +71,19 @@ export class RecipesListComponent implements OnInit {
 
   addToMeal(recipe: Recipe): void {
     this.mealService.addRecipe(recipe);
+  }
+
+  openImportDialog(): void {
+    const dialogRef = this.dialog.open(ImportRecipeDialogComponent, {
+      width: '500px'
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.loadRecipes();
+    });
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/']);
   }
 }

@@ -1,38 +1,36 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Login</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <mat-form-field appearance="fill">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" required />
-        <mat-error *ngIf="loginForm.get('email')?.hasError('required')"
-          >Email is required</mat-error
-        >
-        <mat-error *ngIf="loginForm.get('email')?.hasError('email')"
-          >Please enter a valid email</mat-error
-        >
-      </mat-form-field>
+<div class="min-h-screen bg-background flex flex-col">
+  <!-- Nav -->
+  <nav class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-xl">
+    <div class="flex justify-between items-center px-6 md:px-16 py-6 max-w-[1440px] mx-auto">
+      <a routerLink="/" class="text-2xl font-headline font-black text-primary">RecipeBox</a>
+      <a routerLink="/register" class="editorial-gradient text-on-primary px-6 py-2.5 rounded-lg font-headline font-bold tracking-tight shadow-sm active:scale-95 transition-all duration-200">Sign Up</a>
+    </div>
+  </nav>
 
-      <mat-form-field appearance="fill">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" formControlName="password" required />
-        <mat-error *ngIf="loginForm.get('password')?.hasError('required')"
-          >Password is required</mat-error
-        >
-      </mat-form-field>
-
-      <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
-
-      <button
-        mat-raised-button
-        color="primary"
-        type="submit"
-        [disabled]="!loginForm.valid"
-      >
-        Login
-      </button>
-    </form>
-  </mat-card-content>
-</mat-card>
+  <main class="flex-1 flex items-center justify-center pt-24 pb-12 px-6">
+    <div class="w-full max-w-md">
+      <h2 class="text-4xl font-headline font-bold text-primary mb-2">Welcome Back</h2>
+      <p class="text-on-surface-variant mb-10">Access your curated culinary library.</p>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <div>
+          <label class="block text-sm font-bold text-primary mb-2 uppercase tracking-widest">Email Address</label>
+          <input formControlName="email" class="w-full bg-surface-container-low border-none rounded-xl p-4 focus:ring-2 focus:ring-[#496455]/40 transition-all outline-none" placeholder="chef@recipebox.com" type="email"/>
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <p class="text-error text-xs mt-1">Please enter a valid email.</p>
+          }
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-primary mb-2 uppercase tracking-widest">Password</label>
+          <input formControlName="password" class="w-full bg-surface-container-low border-none rounded-xl p-4 focus:ring-2 focus:ring-[#496455]/40 transition-all outline-none" placeholder="••••••••" type="password"/>
+        </div>
+        @if (errorMessage) {
+          <div class="text-error text-sm">{{ errorMessage }}</div>
+        }
+        <button class="w-full editorial-gradient text-on-primary py-4 rounded-xl font-headline font-bold text-lg shadow-lg hover:shadow-xl transition-all" type="submit" [disabled]="!loginForm.valid">
+          Sign In
+        </button>
+        <p class="text-center text-sm text-on-surface-variant">Don't have an account? <a routerLink="/register" class="text-[#496455] font-bold hover:underline">Sign up →</a></p>
+      </form>
+    </div>
+  </main>
+</div>
