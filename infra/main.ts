@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { Construct } from "constructs";
-import { App, TerraformStack, TerraformOutput } from "cdktf";
+import { App, TerraformStack, TerraformOutput, AzurermBackend } from "cdktf";
 import { AzurermProvider } from "@cdktf/provider-azurerm/lib/provider";
 import { ResourceGroup } from "@cdktf/provider-azurerm/lib/resource-group";
 import { ContainerRegistry } from "@cdktf/provider-azurerm/lib/container-registry";
@@ -221,5 +221,11 @@ class MyStack extends TerraformStack {
 }
 
 const app = new App();
-new MyStack(app, "recipebox-infra");
+const stack = new MyStack(app, "recipebox-infra");
+new AzurermBackend(stack, {
+    resourceGroupName: "rg-recipebox-dev",
+    storageAccountName: "recipeboxtfstate",
+    containerName: "tfstate",
+    key: "recipebox-infra.tfstate",
+});
 app.synth();
