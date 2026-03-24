@@ -238,6 +238,30 @@ jobs:
           
           echo "✓ ArgoCD installed"
 
+      - name: Install NGINX Ingress Controller
+        if: success() && github.event_name == 'push'
+        run: |
+          echo "Installing NGINX Ingress Controller..."
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update
+          helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx --create-namespace \
+            --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+            --wait --timeout 300s
+          echo "✓ NGINX Ingress Controller installed"
+
+      - name: Install cert-manager
+        if: success() && github.event_name == 'push'
+        run: |
+          echo "Installing cert-manager..."
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager \
+            --namespace cert-manager --create-namespace \
+            --set installCRDs=true \
+            --wait --timeout 300s
+          echo "✓ cert-manager installed"
+
       - name: Apply ArgoCD applications
         if: success() && github.event_name == 'push'
         run: |
