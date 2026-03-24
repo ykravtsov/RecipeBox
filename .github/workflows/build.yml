@@ -9,7 +9,6 @@ on:
       - 'frontend/**'
       - 'rust-backend/**'
       - 'docker-compose.yml'
-      - '.github/workflows/build.yml'
   pull_request:
     branches:
       - main
@@ -17,11 +16,6 @@ on:
       - 'frontend/**'
       - 'rust-backend/**'
       - 'docker-compose.yml'
-  # Wait for infrastructure deployment to complete first (prevents race conditions)
-  workflow_run:
-    workflows: ['Deploy Infrastructure']
-    types: ['completed']
-    branches: [main]
   # Manual trigger
   workflow_dispatch:
     inputs:
