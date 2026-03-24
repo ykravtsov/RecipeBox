@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'infra/**'
+      - 'k8s/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
     inputs:
@@ -30,6 +31,76 @@ on:
           - destroy
 
 jobs:
+  sync-k8s:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    # Only run for k8s-only changes (not when infra also changed)
+    if: >
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.modified, 'k8s/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "rg-recipebox-dev" \
+            --name "recipebox-aks-dev" \
+            --overwrite-existing
+
+      - name: Trigger ArgoCD sync
+        run: |
+          echo "Triggering ArgoCD sync for recipebox application..."
+
+          # Install ArgoCD CLI
+          curl -sSL -o /usr/local/bin/argocd \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
+          # Get ArgoCD server address
+          ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || \
+            kubectl get svc argocd-server -n argocd \
+            -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
+
+          if [ -z "$ARGOCD_SERVER" ]; then
+            echo "ArgoCD server not reachable via LoadBalancer, falling back to kubectl apply..."
+            kubectl apply -f k8s/application.yaml
+            echo "✓ ArgoCD application manifest re-applied"
+          else
+            # Get ArgoCD admin password
+            ARGOCD_PASSWORD=$(kubectl get secret argocd-initial-admin-secret \
+              -n argocd -o jsonpath='{.data.password}' | base64 -d)
+
+            argocd login "$ARGOCD_SERVER" \
+              --username admin \
+              --password "$ARGOCD_PASSWORD" \
+              --insecure
+
+            argocd app sync recipebox --force
+            argocd app wait recipebox --timeout 120 || true
+            echo "✓ ArgoCD sync triggered"
+          fi
+
+      - name: Sync summary
+        if: always()
+        run: |
+          echo "## K8s Sync" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered ArgoCD sync for k8s manifest changes" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+
   deploy:
     runs-on: ubuntu-latest
     permissions:
