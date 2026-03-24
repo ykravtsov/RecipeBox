@@ -65,6 +65,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Wait for Deploy Infrastructure if running
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Checking for in-progress Deploy Infrastructure runs on this commit..."
+          DEPLOY_RUN_ID=$(gh run list \
+            --workflow=deploy.yml \
+            --commit "${{ github.sha }}" \
+            --status=in_progress \
+            --json databaseId \
+            --jq '.[0].databaseId' 2>/dev/null || echo "")
+          if [ -n "$DEPLOY_RUN_ID" ]; then
+            echo "Deploy run $DEPLOY_RUN_ID is in progress – waiting for it to complete..."
+            gh run watch "$DEPLOY_RUN_ID" --exit-status || true
+            echo "Deploy run finished."
+          else
+            echo "No in-progress deploy workflow found, proceeding."
+          fi
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -190,6 +210,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Wait for Deploy Infrastructure if running
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Checking for in-progress Deploy Infrastructure runs on this commit..."
+          DEPLOY_RUN_ID=$(gh run list \
+            --workflow=deploy.yml \
+            --commit "${{ github.sha }}" \
+            --status=in_progress \
+            --json databaseId \
+            --jq '.[0].databaseId' 2>/dev/null || echo "")
+          if [ -n "$DEPLOY_RUN_ID" ]; then
+            echo "Deploy run $DEPLOY_RUN_ID is in progress – waiting for it to complete..."
+            gh run watch "$DEPLOY_RUN_ID" --exit-status || true
+            echo "Deploy run finished."
+          else
+            echo "No in-progress deploy workflow found, proceeding."
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
