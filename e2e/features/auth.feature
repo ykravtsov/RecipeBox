@@ -1,5 +1,12 @@
 Feature: Authentication
 
+    Scenario: Register a new account and access recipes
+        Given I am on the register page
+        When I enter email "e2eregtest@recipebox.com" and password "Test123!"
+        And I click the register button
+        Then I should be redirected to the recipes page
+        And I should see the recipes list
+
     Scenario: Login with seeded user and access recipes
         Given I am on the login page
         When I enter email "testuser@example.com" and password "Test123!"
@@ -13,7 +20,7 @@ Feature: Authentication
         And I click the login button
         Then I should see an error message
 
-    Scenario: Logout and redirect to login page
+    Scenario: Logout and redirect away from recipes
         Given I am logged in with email "testuser@example.com" and password "Test123!"
         When I click the logout button
         Then I should be redirected to the login page

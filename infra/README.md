@@ -50,11 +50,19 @@ Default credentials:
 
 ## Configuration
 
-The infrastructure uses environment variables for configuration:
+The infrastructure uses environment variables for configuration. Copy `infra/.env.example` to `infra/.env` and fill in all values before deploying locally.
 
-- `GITHUB_REPOSITORY_URL`: Your GitHub repository URL (automatically set in CI/CD)
-- `POSTGRES_PASSWORD`: PostgreSQL administrator password (set via GitHub Secrets)
+| Variable | Description | Source |
+|---|---|---|
+| `ENVIRONMENT` | Deployment target: `dev`, `staging`, or `prod` | Manual |
+| `GITHUB_REPOSITORY_URL` | Your GitHub repository URL for ArgoCD GitOps | Manual / CI |
+| `POSTGRES_PASSWORD` | PostgreSQL administrator password | GitHub Secret |
+| `AZURE_CREDENTIALS` | Azure service principal JSON (subscriptionId, tenantId, clientId, clientSecret) | `az ad sp create-for-rbac` |
+| `GROK_API_KEY` | xAI Grok API key | [console.x.ai](https://console.x.ai) |
 
 ## Security Note
 
-The PostgreSQL password is read from the `POSTGRES_PASSWORD` environment variable. Make sure to set this as a GitHub Secret in your repository settings.
+- **Never commit `infra/.env`** — it is gitignored for this reason.
+- Store all secrets as [GitHub Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) for CI/CD pipelines.
+- The Azure service principal should be scoped to the minimum required role (Contributor on the target resource group, not the full subscription where possible).
+- Rotate the Azure `clientSecret` and `GROK_API_KEY` immediately if there is any possibility they have been exposed outside of your local machine.

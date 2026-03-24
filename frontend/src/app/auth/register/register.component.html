@@ -1,39 +1,43 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Register</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-      <mat-form-field appearance="fill">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" required />
-        @if (registerForm.get('email')?.hasError('required')) {
-        <mat-error>Email is required</mat-error>
-        } @else if (registerForm.get('email')?.hasError('email')) {
-        <mat-error>Please enter a valid email</mat-error>
+<div class="min-h-screen bg-primary flex flex-col relative overflow-hidden">
+  <div class="absolute inset-0 z-0">
+    <img alt="Luxury ingredients" class="w-full h-full object-cover opacity-20"
+      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBct-kSdlrqPppFbRPvRUHAUvsCnaEYYuuLgEQX2Twon22s0JbTjTwLh6x061VVAvOi1GLgYJVcB4K94Vg4cPoGAy6MqTfIXUg7XQns57eFSPr85ANMedS5JNUKqQ11UQbMB4YCejLwLbBfcuXuKMPa9ErIdZ8VCj7kJGkWdIgHfeO_-7sEGB-uP320fFBO8etk2a8BZ2hJt-ZYyoeVdzqeSYf4DtRQ3AfEuiPmZFlNfMbQqBViTAbH3ie_YiFU6oltoNQHD5xaHege"/>
+  </div>
+
+  <!-- Nav -->
+  <nav class="relative z-10 flex justify-between items-center px-6 md:px-16 py-6 max-w-[1440px] mx-auto w-full">
+    <a routerLink="/" class="text-2xl font-headline font-black text-on-primary">RecipeBox</a>
+    <a routerLink="/login" class="text-on-primary font-headline font-bold tracking-tight hover:text-on-primary/70 transition-colors">Log In</a>
+  </nav>
+
+  <main class="relative z-10 flex-1 flex items-center justify-center pt-6 pb-12 px-6">
+    <div class="w-full max-w-md text-on-primary">
+      <h2 class="text-4xl font-headline font-bold mb-2">Join the Reserve</h2>
+      <p class="text-[#7d9988] mb-10">Start your culinary journey today.</p>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <div>
+          <label class="block text-xs font-bold mb-2 uppercase tracking-widest opacity-80">Email Address</label>
+          <input formControlName="email" class="w-full bg-white/10 border-none rounded-xl p-4 text-white placeholder-white/40 focus:ring-2 focus:ring-[#b0cdbb] outline-none" placeholder="chef@recipebox.com" type="email"/>
+          @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+            <p class="text-[#ffdad6] text-xs mt-1">Please enter a valid email.</p>
+          }
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-2 uppercase tracking-widest opacity-80">Choose Password</label>
+          <input formControlName="password" class="w-full bg-white/10 border-none rounded-xl p-4 text-white placeholder-white/40 focus:ring-2 focus:ring-[#b0cdbb] outline-none" placeholder="••••••••" type="password"/>
+          @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+            <p class="text-[#ffdad6] text-xs mt-1">{{ getPasswordErrorMessage() }}</p>
+          }
+        </div>
+        @if (errorMessage) {
+          <div class="text-[#ffdad6] text-sm">{{ errorMessage }}</div>
         }
-      </mat-form-field>
-
-      <mat-form-field appearance="fill">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" formControlName="password" required />
-        @if (registerForm.get('password')?.invalid) {
-        <mat-error>{{ getPasswordErrorMessage() }}</mat-error>
-        }
-      </mat-form-field>
-
-      <button
-        mat-raised-button
-        color="primary"
-        type="submit"
-        [disabled]="!registerForm.valid"
-      >
-        Register
-      </button>
-
-      @if (errorMessage) {
-      <div class="error-message">{{ errorMessage }}</div>
-      }
-    </form>
-  </mat-card-content>
-</mat-card>
+        <button class="w-full bg-[#ccead6] text-[#062014] py-4 rounded-xl font-headline font-bold text-lg shadow-lg hover:bg-white transition-all" type="submit" [disabled]="!registerForm.valid">
+          Create Account
+        </button>
+        <p class="text-center text-sm text-[#7d9988]">Already have an account? <a routerLink="/login" class="text-[#ccead6] font-bold hover:underline">Sign in →</a></p>
+      </form>
+      <p class="mt-8 text-sm text-[#7d9988] text-center italic">"The secret of success is constancy of purpose."</p>
+    </div>
+  </main>
+</div>

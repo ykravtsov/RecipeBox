@@ -1,20 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { RecipeService } from '../services/recipe.service';
 import { Recipe } from '../models/recipe';
 
 @Component({
-  selector: 'app-recipe-detail',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
-  templateUrl: './recipe-detail.component.html',
-  styleUrl: './recipe-detail.component.scss'
+    standalone: true,
+    selector: 'app-recipe-detail',
+    imports: [FormsModule, RouterLink],
+    templateUrl: './recipe-detail.component.html',
+    styleUrl: './recipe-detail.component.scss'
 })
 export class RecipeDetailComponent implements OnInit {
   recipe: Recipe = {
@@ -27,6 +23,7 @@ export class RecipeDetailComponent implements OnInit {
     steps: []
   };
   isEditMode = false;
+  checkedIngredients: Set<number> = new Set();
 
   constructor(
     private route: ActivatedRoute,
@@ -47,10 +44,26 @@ export class RecipeDetailComponent implements OnInit {
     }
   }
 
+  toggleIngredient(index: number): void {
+    if (this.checkedIngredients.has(index)) {
+      this.checkedIngredients.delete(index);
+    } else {
+      this.checkedIngredients.add(index);
+    }
+  }
+
+  isChecked(index: number): boolean {
+    return this.checkedIngredients.has(index);
+  }
+
+  stepNumber(i: number): string {
+    return String(i + 1).padStart(2, '0');
+  }
+
   saveRecipe(): void {
     if (this.recipe.id) {
       this.recipeService.updateRecipe(this.recipe.id, this.recipe).subscribe({
-        next: () => this.router.navigate(['/']),
+        next: () => this.router.navigate(['/recipes']),
         error: (error) => console.error('Error updating recipe', error)
       });
     }
@@ -59,7 +72,7 @@ export class RecipeDetailComponent implements OnInit {
   deleteRecipe(): void {
     if (this.recipe.id && confirm('Are you sure you want to delete this recipe?')) {
       this.recipeService.deleteRecipe(this.recipe.id).subscribe({
-        next: () => this.router.navigate(['/']),
+        next: () => this.router.navigate(['/recipes']),
         error: (error) => console.error('Error deleting recipe', error)
       });
     }

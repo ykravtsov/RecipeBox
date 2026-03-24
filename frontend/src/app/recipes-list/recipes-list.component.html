@@ -1,98 +1,196 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Recipes</mat-card-title>
-  </mat-card-header>
-
-  <mat-card-content>
-    <div class="actions-row">
-      <button
-        mat-raised-button
-        color="primary"
-        routerLink="/recipes/add"
-        class="mb-3"
-      >
-        Add New Recipe
-      </button>
-    </div>
-
-    <div class="search-section">
-      <mat-form-field appearance="outline" class="search-input">
-        <mat-label>Search by tags or ingredients</mat-label>
-        <input
-          matInput
-          [(ngModel)]="searchQuery"
-          (keyup.enter)="addSearchTerm()"
-          placeholder="Type and press Enter to add"
-        />
-      </mat-form-field>
-      <button
-        mat-raised-button
-        color="accent"
-        (click)="addSearchTerm()"
-        class="add-term-btn"
-      >
-        Add
-      </button>
-      <button mat-raised-button (click)="searchRecipes()" class="search-btn">
-        Search
-      </button>
-      <button mat-button (click)="clearSearch()" class="clear-btn">
-        Clear
-      </button>
-    </div>
-
-    <div class="search-chips" *ngIf="searchTerms.length > 0">
-      <mat-chip-listbox>
-        <mat-chip
-          *ngFor="let term of searchTerms"
-          (removed)="removeSearchTerm(term)"
-        >
-          {{ term }}
-          <button matChipRemove>
-            <mat-icon>cancel</mat-icon>
-          </button>
-        </mat-chip>
-      </mat-chip-listbox>
-    </div>
-
-    <div class="main-content">
-      <div class="recipes-section">
-        <div class="recipes-grid">
-          <mat-card *ngFor="let recipe of recipes" class="recipe-card">
-            <img
-              mat-card-image
-              [src]="
-                recipe.imageUrl ||
-                'https://via.placeholder.com/300x200?text=No+Image'
-              "
-              [alt]="recipe.title"
-            />
-            <mat-card-header>
-              <mat-card-title>{{ recipe.title }}</mat-card-title>
-              <mat-card-subtitle>{{ recipe.description }}</mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-actions>
-              <button
-                mat-button
-                color="accent"
-                routerLink="/recipe/{{ recipe.id }}"
-              >
-                View Details
-              </button>
-              <button
-                mat-button
-                color="primary"
-                routerLink="/recipe/{{ recipe.id }}/edit"
-              >
-                Edit
-              </button>
-              <button mat-button color="warn" (click)="addToMeal(recipe)">
-                Add to Meal
-              </button>
-            </mat-card-actions>
-          </mat-card>
-        </div>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-xl shadow-sm">
+  <nav class="flex justify-between items-center px-8 py-4 max-w-[1440px] mx-auto w-full">
+    <div class="flex items-center gap-12">
+      <span class="font-headline italic text-2xl text-primary">RecipeBox</span>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-primary font-bold border-b-2 border-[#496455] pb-1 font-body text-sm" routerLink="/recipes">Discover</a>
+        <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-body text-sm" routerLink="/recipes">My Box</a>
       </div>
     </div>
-  </mat-card-content>
-</mat-card>
+    <div class="flex items-center gap-6">
+      <div class="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2 w-64">
+        <span class="material-symbols-outlined text-on-surface-variant text-sm">search</span>
+        <input
+          class="bg-transparent border-none focus:outline-none text-sm w-full placeholder:text-on-surface-variant/60 ml-2"
+          placeholder="Search recipes..."
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="addSearchTerm()"
+          />
+      </div>
+      <button (click)="openImportDialog()" class="bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-bold hover:scale-95 active:scale-90 duration-200 ease-in-out transition-transform">
+        Import Recipe
+      </button>
+      <button (click)="logout()" class="text-primary hover:bg-surface-container/50 rounded-lg p-2 transition-all">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
+      <a routerLink="/recipes/add" class="text-primary hover:bg-surface-container/50 rounded-lg p-2 transition-all">
+        <span class="material-symbols-outlined">account_circle</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main class="pt-24 pb-20 max-w-[1440px] mx-auto px-8">
+  <!-- Hero Carousel placeholder -->
+  <section class="mb-20">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <span class="text-[#496455] font-bold tracking-[0.2em] text-xs uppercase mb-2 block">Curated Collections</span>
+        <h2 class="font-headline text-5xl text-on-background">Chef's Recommendations</h2>
+      </div>
+    </div>
+    <div class="relative h-[500px] overflow-hidden rounded-[2rem] bg-surface-container-low flex items-center">
+      <div class="absolute inset-0">
+        <img alt="Gourmet Plated Meal" class="w-full h-full object-cover"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWjbdfHya6QJ3uIOSJ-sIR7p8YYozQWph-N94vL5-6gcECxH4_pGrozMuF6ZqrVRpWJ-LCVHoEkMHAxa25-D1rpYeSbF-R4Q2Qzc2vu_EL-HpJduL5nCEI8nykUvDY2hcswotCjy2ermiDmWVnJcyJxvObDPnL2Kl6Jh4DDPWa7nW5cFYgN27Y7GA2vkaj_9dioXlXTiJ36cK9kJ8lLNg0f7OG37RXFYg4YdPXsxruzPBHXJnp5a1Hf1UnnEKk4NGmXH2XYNcgvmzj"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent"></div>
+      </div>
+      <div class="relative z-10 px-16 max-w-2xl">
+        <div class="mb-4">
+          <span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-[10px] uppercase tracking-widest font-bold">Featured Chef</span>
+        </div>
+        <h3 class="font-headline text-6xl text-white mb-6 leading-tight">Spring Harvest: Roasted Lamb with Mint Gremolata</h3>
+        <div class="flex items-center gap-8 text-white/90">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">schedule</span>
+            <span class="text-sm font-medium">45 Mins</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">restaurant</span>
+            <span class="text-sm font-medium">French Cuisine</span>
+          </div>
+        </div>
+        <a routerLink="/recipes" class="mt-10 bg-surface-bright text-primary px-8 py-4 rounded-xl font-bold flex items-center gap-3 hover:bg-white transition-all transform hover:-translate-y-1 shadow-lg w-fit">
+          Start Cooking
+          <span class="material-symbols-outlined">arrow_right_alt</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search & Filter Bar -->
+  @if (searchTerms.length > 0) {
+    <div class="mb-8 flex flex-wrap gap-3 items-center">
+      <span class="text-sm text-on-surface-variant font-medium">Filters:</span>
+      @for (term of searchTerms; track term) {
+        <span
+          class="flex items-center gap-1 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-sm font-bold">
+          {{ term }}
+          <button (click)="removeSearchTerm(term)" class="ml-1 hover:text-primary">
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </span>
+      }
+      <button (click)="clearSearch()" class="text-sm text-on-surface-variant hover:text-primary underline">Clear all</button>
+    </div>
+  }
+
+  <!-- Recipe Grid -->
+  <section>
+    <div class="flex justify-between items-center mb-12">
+      <h2 class="font-headline text-3xl text-on-background">
+        {{ searchTerms.length > 0 ? 'Search Results' : 'Your Recipe Box' }}
+      </h2>
+      <div class="flex gap-4">
+        <a routerLink="/recipes/add" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl text-sm font-bold hover:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-sm">add</span>
+          Add Recipe
+        </a>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    @if (recipes.length === 0) {
+      <div class="text-center py-32">
+        <span class="material-symbols-outlined text-6xl text-outline mb-6 block">menu_book</span>
+        <h3 class="font-headline text-2xl text-primary mb-3">Your recipe box is empty</h3>
+        <p class="text-on-surface-variant mb-8">Start by importing a recipe or adding your own.</p>
+        <div class="flex justify-center gap-4">
+          <button (click)="openImportDialog()" class="editorial-gradient text-on-primary px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all">
+            Import Recipe
+          </button>
+          <a routerLink="/recipes/add" class="bg-surface-container text-primary px-8 py-3 rounded-xl font-bold hover:bg-surface-container-high transition-colors">
+            Add Manually
+          </a>
+        </div>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+      @for (recipe of recipes; track recipe) {
+        <div
+          class="group relative bg-surface-container-low rounded-[2rem] overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/5">
+          <div class="aspect-[4/5] overflow-hidden relative">
+            <img
+              [alt]="recipe.title"
+              [src]="recipe.imageUrl || 'https://via.placeholder.com/400x500?text=No+Image'"
+              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            <!-- Glass Labels -->
+            <div class="absolute top-4 left-4 flex flex-col gap-2">
+              <div class="recipe-card-glass px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                <span class="material-symbols-outlined text-[16px] text-primary">timer</span>
+                <span class="text-[11px] font-bold text-primary tracking-wide">QUICK</span>
+              </div>
+            </div>
+            <button (click)="addToMeal(recipe)" class="absolute top-4 right-4 w-10 h-10 rounded-full recipe-card-glass flex items-center justify-center text-primary transition-colors hover:bg-primary hover:text-white shadow-sm">
+              <span class="material-symbols-outlined">playlist_add</span>
+            </button>
+          </div>
+          <div class="p-8">
+            <h3 class="font-headline text-2xl text-on-background mb-3 group-hover:text-[#496455] transition-colors line-clamp-2">{{ recipe.title }}</h3>
+            <p class="text-on-surface-variant text-sm line-clamp-2 leading-relaxed mb-6">{{ recipe.description }}</p>
+            <div class="flex gap-3">
+              <a [routerLink]="['/recipes/recipe', recipe.id]"
+                class="flex-1 text-center bg-primary text-on-primary py-2.5 rounded-xl text-sm font-bold hover:scale-95 transition-transform">
+                View Recipe
+              </a>
+              <a [routerLink]="['/recipes/recipe', recipe.id, 'edit']"
+                class="flex-1 text-center bg-surface-container text-primary py-2.5 rounded-xl text-sm font-bold hover:bg-surface-container-high transition-colors">
+                Edit
+              </a>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (recipes.length > 0) {
+      <div class="mt-20 flex justify-center">
+        <button class="group flex items-center gap-4 text-primary font-bold text-lg">
+          <span class="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+            <span class="material-symbols-outlined">expand_more</span>
+          </span>
+          View More Recipes
+        </button>
+      </div>
+    }
+  </section>
+</main>
+
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 md:hidden bg-[#fbf9f5] shadow-[0_-4px_20px_rgba(2,28,16,0.06)] z-50 rounded-t-3xl">
+  <a class="flex flex-col items-center justify-center bg-secondary-container text-primary rounded-2xl px-5 py-2" routerLink="/recipes">
+    <span class="material-symbols-outlined">restaurant</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Feed</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2 hover:bg-surface-container rounded-xl" href="#">
+    <span class="material-symbols-outlined">search</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Search</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2 hover:bg-surface-container rounded-xl" href="#">
+    <span class="material-symbols-outlined">style</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Saved</span>
+  </a>
+  <button (click)="logout()" class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2 hover:bg-surface-container rounded-xl">
+    <span class="material-symbols-outlined">logout</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Out</span>
+  </button>
+</nav>
+
+<!-- FAB -->
+<a routerLink="/recipes/add" class="fixed right-8 bottom-8 md:bottom-12 w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl z-40 hover:scale-105 transition-transform">
+  <span class="material-symbols-outlined text-3xl">add</span>
+</a>

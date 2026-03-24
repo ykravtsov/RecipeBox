@@ -1,19 +1,15 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
-  selector: 'app-register',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCardModule],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.scss'
+    standalone: true,
+    selector: 'app-register',
+    imports: [ReactiveFormsModule, RouterModule],
+    templateUrl: './register.component.html',
+    styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
   registerForm: FormGroup;
@@ -83,7 +79,7 @@ export class RegisterComponent {
           // After successful registration, automatically log the user in
           this.authService.login(email, password).subscribe({
             next: () => {
-              this.router.navigate(['/']);
+              this.router.navigate(['/recipes']);
             },
             error: (loginError) => {
               // If auto-login fails, redirect to login page

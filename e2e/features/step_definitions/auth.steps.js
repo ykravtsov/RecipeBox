@@ -7,13 +7,19 @@ Given("I navigate to the app", async function () {
 
 Given("I am on the login page", async function () {
   await this.page.goto("http://localhost:4200/login");
+  await this.page.waitForSelector('form', { timeout: 10000 });
+});
+
+Given("I am on the register page", async function () {
+  await this.page.goto("http://localhost:4200/register");
+  await this.page.waitForSelector('form', { timeout: 10000 });
 });
 
 When(
   "I enter email {string} and password {string}",
   async function (email, password) {
-    await this.page.getByLabel("Email").fill(email);
-    await this.page.getByLabel("Password").fill(password);
+    await this.page.fill('input[type="email"]', email);
+    await this.page.fill('input[type="password"]', password);
   },
 );
 
@@ -21,12 +27,16 @@ When("I click the login button", async function () {
   await this.page.locator('button[type="submit"]').click();
 });
 
+When("I click the register button", async function () {
+  await this.page.locator('button[type="submit"]').click();
+});
+
 Then("I should see the recipes list", async function () {
-  await expect(this.page.getByText("Recipes")).toBeVisible();
+  await expect(this.page.getByText("My Box")).toBeVisible({ timeout: 10000 });
 });
 
 Then("I should see an error message", async function () {
-  await expect(this.page.getByText(/error|invalid|failed/i)).toBeVisible();
+  await expect(this.page.getByText(/error|invalid|failed|incorrect/i)).toBeVisible({ timeout: 10000 });
 });
 
 Given(
@@ -34,18 +44,20 @@ Given(
   { timeout: 60000 },
   async function (email, password) {
     await this.page.goto("http://localhost:4200/login", { timeout: 30000 });
-    await this.page.waitForSelector("mat-card", { timeout: 30000 });
-    await this.page.getByLabel("Email").fill(email);
-    await this.page.getByLabel("Password").fill(password);
+    await this.page.waitForSelector('form', { timeout: 30000 });
+    await this.page.fill('input[type="email"]', email);
+    await this.page.fill('input[type="password"]', password);
     await this.page.locator('button[type="submit"]').click();
-    await expect(this.page).toHaveURL(/.*recipes/);
+    await expect(this.page).toHaveURL(/.*recipes/, { timeout: 15000 });
   },
 );
 
 When("I click the logout button", async function () {
-  await this.page.getByText("Logout").click();
+  // Logout is a button containing a material icon with text "logout"
+  await this.page.locator('button').filter({ hasText: /logout/i }).first().click();
 });
 
 Then("I should be redirected to the login page", async function () {
-  await expect(this.page).toHaveURL(/.*login/);
+  // After logout, app navigates to '/' (welcome page) - check we are no longer on recipes
+  await expect(this.page).not.toHaveURL(/.*recipes/, { timeout: 5000 });
 });

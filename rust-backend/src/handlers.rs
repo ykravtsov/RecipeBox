@@ -84,6 +84,7 @@ pub async fn create_recipe(
         .transpose()
         .map_err(|_| sea_orm::DbErr::Custom("Serialization error".to_string()))?;
     let recipe = entities::ActiveModel {
+        id: Set(Uuid::new_v4()),
         user_id: Set(user_id),
         title: Set(payload.title),
         ingredients: Set(ingredients_value),

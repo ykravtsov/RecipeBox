@@ -1,5 +1,6 @@
-{
-  "/api/*": {
+[
+  {
+    "context": ["/api"],
     "target": "http://rust-backend:3000",
     "secure": false,
     "changeOrigin": true,
@@ -8,4 +9,4 @@
       "^/api": ""
     }
   }
-}
+]
