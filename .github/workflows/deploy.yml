@@ -333,6 +333,35 @@ jobs:
             --wait --timeout 300s
           echo "✓ cert-manager installed"
 
+      - name: Configure ArgoCD GitHub credentials
+        if: success() && github.event_name == 'push'
+        env:
+          GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_TOKEN }}
+        run: |
+          echo "Registering GitHub repository credentials with ArgoCD..."
+
+          # Install ArgoCD CLI
+          curl -sSL -o /usr/local/bin/argocd \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
+          ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          ARGOCD_PASSWORD=$(kubectl get secret argocd-initial-admin-secret \
+            -n argocd -o jsonpath='{.data.password}' | base64 -d)
+
+          argocd login "$ARGOCD_SERVER" \
+            --username admin \
+            --password "$ARGOCD_PASSWORD" \
+            --insecure
+
+          argocd repo add https://github.com/ykravtsov/RecipeBox \
+            --username ykravtsov \
+            --password "$GITHUB_PAT" \
+            --upsert
+
+          echo "✓ GitHub credentials registered with ArgoCD"
+
       - name: Apply ArgoCD applications
         if: success() && github.event_name == 'push'
         run: |
