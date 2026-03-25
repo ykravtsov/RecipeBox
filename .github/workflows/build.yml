@@ -151,6 +151,13 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: azure/setup-kubectl@v3
 
+      - name: Set up ArgoCD CLI
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          curl -sSL -o /usr/local/bin/argocd \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
       - name: Get ACR token (backend)
         if: github.event_name != 'pull_request'
         id: acr
@@ -184,15 +191,33 @@ jobs:
             ${{ steps.acr.outputs.registry }}/recipebox-api:${{ steps.meta.outputs.tag }}
             ${{ steps.acr.outputs.registry }}/recipebox-api:latest
 
-      - name: Rollout restart backend deployment
+      - name: Deploy via ArgoCD sync
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_TOKEN }}
         run: |
           RG_NAME="rg-recipebox-${{ steps.meta.outputs.environment }}"
           AKS_NAME="recipebox-aks-${{ steps.meta.outputs.environment }}"
           az aks get-credentials --resource-group "$RG_NAME" --name "$AKS_NAME" --overwrite-existing
-          kubectl rollout restart deployment -l app.kubernetes.io/component=backend || \
-          kubectl rollout restart deployment/recipebox-backend 2>/dev/null || true
-          echo "✓ Backend rollout restart triggered"
+
+          ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          ARGOCD_PASSWORD=$(kubectl get secret argocd-initial-admin-secret \
+            -n argocd -o jsonpath='{.data.password}' | base64 -d)
+
+          argocd login "$ARGOCD_SERVER" \
+            --username admin \
+            --password "$ARGOCD_PASSWORD" \
+            --insecure
+
+          argocd repo add https://github.com/ykravtsov/RecipeBox \
+            --username ykravtsov \
+            --password "$GITHUB_PAT" \
+            --upsert
+
+          argocd app sync recipebox --force
+          argocd app wait recipebox --timeout 180 || true
+          echo "✓ ArgoCD sync triggered for backend update"
 
       - name: Build backend image (PR)
         if: github.event_name == 'pull_request'
@@ -290,6 +315,13 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: azure/setup-kubectl@v3
 
+      - name: Set up ArgoCD CLI
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          curl -sSL -o /usr/local/bin/argocd \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
       - name: Get ACR token (frontend)
         if: github.event_name != 'pull_request'
         id: acr
@@ -323,15 +355,35 @@ jobs:
             ${{ steps.acr.outputs.registry }}/recipebox-frontend:${{ steps.meta.outputs.tag }}
             ${{ steps.acr.outputs.registry }}/recipebox-frontend:latest
 
-      - name: Rollout restart frontend deployment
+      - name: Deploy via ArgoCD sync
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_TOKEN }}
         run: |
           RG_NAME="rg-recipebox-${{ steps.meta.outputs.environment }}"
           AKS_NAME="recipebox-aks-${{ steps.meta.outputs.environment }}"
           az aks get-credentials --resource-group "$RG_NAME" --name "$AKS_NAME" --overwrite-existing
-          kubectl rollout restart deployment -l app.kubernetes.io/component=frontend || \
-          kubectl rollout restart deployment/recipebox-frontend 2>/dev/null || true
-          echo "✓ Frontend rollout restart triggered"
+
+          ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          ARGOCD_PASSWORD=$(kubectl get secret argocd-initial-admin-secret \
+            -n argocd -o jsonpath='{.data.password}' | base64 -d)
+
+          argocd login "$ARGOCD_SERVER" \
+            --username admin \
+            --password "$ARGOCD_PASSWORD" \
+            --insecure
+
+          # Ensure GitHub credentials are registered (idempotent)
+          argocd repo add https://github.com/ykravtsov/RecipeBox \
+            --username ykravtsov \
+            --password "$GITHUB_PAT" \
+            --upsert
+
+          # Force sync so ArgoCD pulls the latest image
+          argocd app sync recipebox --force
+          argocd app wait recipebox --timeout 180 || true
+          echo "✓ ArgoCD sync triggered for frontend update"
 
       - name: Build frontend image (PR)
         if: github.event_name == 'pull_request'
