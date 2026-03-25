@@ -60,6 +60,10 @@ core
 *.core
 
 # Rust
-target/infra/terraform.*.tfstate*
+target/
+rust-backend/target/
+
+# Terraform state
+infra/terraform.*.tfstate*
 **/*.tfstate
 **/*.tfstate.backup
