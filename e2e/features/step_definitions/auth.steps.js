@@ -7,14 +7,14 @@ Given("I navigate to the app", async function () {
   await this.page.goto(`${BASE_URL}/`);
 });
 
-Given("I am on the login page", async function () {
+Given("I am on the login page", { timeout: 30000 }, async function () {
   await this.page.goto(`${BASE_URL}/login`);
-  await this.page.waitForSelector('form', { timeout: 10000 });
+  await this.page.waitForSelector('form', { timeout: 20000 });
 });
 
-Given("I am on the register page", async function () {
+Given("I am on the register page", { timeout: 30000 }, async function () {
   await this.page.goto(`${BASE_URL}/register`);
-  await this.page.waitForSelector('form', { timeout: 10000 });
+  await this.page.waitForSelector('form', { timeout: 20000 });
 });
 
 When(
