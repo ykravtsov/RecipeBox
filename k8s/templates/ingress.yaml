@@ -5,6 +5,8 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   tls:
@@ -15,15 +17,15 @@ spec:
   - host: recipebox.food
     http:
       paths:
-      - path: /api
-        pathType: Prefix
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: {{ include "recipebox.fullname" . }}-backend
             port:
               number: 80
-      - path: /
-        pathType: Prefix
+      - path: /()(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: {{ include "recipebox.fullname" . }}-frontend
