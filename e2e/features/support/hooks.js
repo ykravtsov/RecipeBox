@@ -9,7 +9,8 @@ Before({ timeout: 60000 }, async function () {
   this.context = await this.browser.newContext();
   this.page = await this.context.newPage();
   this.page.setDefaultTimeout(30000); // 30 seconds
-  await this.page.goto("http://localhost:4200/", {
+  const BASE_URL = process.env.BASE_URL || "http://localhost:4200";
+  await this.page.goto(`${BASE_URL}/`, {
     waitUntil: "load",
     timeout: 30000,
   });

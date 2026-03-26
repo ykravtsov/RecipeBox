@@ -1,0 +1,47 @@
+name: E2E Tests (Live)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'e2e/**'
+
+jobs:
+  test-e2e-live:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'e2e/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: e2e
+        run: npm install
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Cucumber E2E tests against live site
+        working-directory: e2e
+        env:
+          BASE_URL: https://recipebox.food
+          API_URL: https://recipebox.food/api
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: npm run test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-live-test-results
+          path: e2e/test-results/
+          if-no-files-found: warn
