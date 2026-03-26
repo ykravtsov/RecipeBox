@@ -218,6 +218,11 @@ jobs:
           argocd app sync recipebox --force
           argocd app wait recipebox --timeout 180 || true
 
+          # Patch backend secret with real credentials first
+          kubectl patch secret recipebox-backend-secret \
+            -p "{\"stringData\":{\"XAI_API_KEY\":\"${{ secrets.GROK_API_KEY }}\",\"DATABASE_URL\":\"postgres://pgadmin:${{ secrets.POSTGRES_PASSWORD }}@recipebox-pg-${{ steps.meta.outputs.environment }}.postgres.database.azure.com/recipebox?sslmode=require\"}}" \
+            || true
+
           # Ensure PostgreSQL password matches GitHub secret
           echo "Resetting PostgreSQL admin password..."
           az postgres flexible-server update \
@@ -226,12 +231,10 @@ jobs:
             --admin-password "${{ secrets.POSTGRES_PASSWORD }}" \
             --output none && echo "✓ PG password updated" || echo "WARNING: PG password update failed (may already be correct)"
 
-          # Patch backend secret with real credentials
-          kubectl patch secret recipebox-backend-secret \
-            -p "{\"stringData\":{\"XAI_API_KEY\":\"${{ secrets.GROK_API_KEY }}\",\"DATABASE_URL\":\"postgres://pgadmin:${{ secrets.POSTGRES_PASSWORD }}@recipebox-pg-${{ steps.meta.outputs.environment }}.postgres.database.azure.com/recipebox?sslmode=require\"}}" \
-            || true
+          echo "Waiting 60s for PostgreSQL password propagation..."
+          sleep 60
 
-          # Force pods to pull new 'latest' image
+          # Force pods to pull new 'latest' image with updated secret
           kubectl rollout restart deployment/recipebox-frontend deployment/recipebox-backend || true
           kubectl rollout status deployment/recipebox-frontend --timeout=120s || true
 
