@@ -219,10 +219,12 @@ jobs:
           argocd app wait recipebox --timeout 180 || true
 
           # Ensure PostgreSQL password matches GitHub secret
+          echo "Resetting PostgreSQL admin password..."
           az postgres flexible-server update \
             --resource-group "rg-recipebox-${{ steps.meta.outputs.environment }}" \
             --name "recipebox-pg-${{ steps.meta.outputs.environment }}" \
-            --admin-password "${{ secrets.POSTGRES_PASSWORD }}" 2>&1 | tail -3 || true
+            --admin-password "${{ secrets.POSTGRES_PASSWORD }}" \
+            --output none && echo "✓ PG password updated" || echo "WARNING: PG password update failed (may already be correct)"
 
           # Patch backend secret with real credentials
           kubectl patch secret recipebox-backend-secret \
