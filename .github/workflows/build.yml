@@ -226,6 +226,12 @@ jobs:
           # Force pods to pull new 'latest' image
           kubectl rollout restart deployment/recipebox-frontend deployment/recipebox-backend || true
           kubectl rollout status deployment/recipebox-frontend --timeout=120s || true
+
+          # Diagnose backend pod status
+          echo "=== Backend pod status ==="
+          kubectl get pods -l app=recipebox-backend -o wide || true
+          echo "=== Backend pod logs ==="
+          kubectl logs -l app=recipebox-backend --tail=50 2>&1 || true
           echo "✓ ArgoCD sync triggered for backend update"
 
       - name: Build backend image (PR)
