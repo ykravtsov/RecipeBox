@@ -228,10 +228,15 @@ jobs:
           kubectl rollout status deployment/recipebox-frontend --timeout=120s || true
 
           # Diagnose backend pod status
+          echo "=== Waiting for backend rollout ==="
+          kubectl rollout status deployment/recipebox-backend --timeout=120s || true
           echo "=== Backend pod status ==="
           kubectl get pods -l app=recipebox-backend -o wide || true
-          echo "=== Backend pod logs ==="
-          kubectl logs -l app=recipebox-backend --tail=50 2>&1 || true
+          echo "=== Backend pod logs (all pods) ==="
+          for POD in $(kubectl get pods -l app=recipebox-backend -o jsonpath='{.items[*].metadata.name}'); do
+            echo "--- Logs for $POD ---"
+            kubectl logs $POD --tail=50 --previous 2>&1 || kubectl logs $POD --tail=50 2>&1 || true
+          done
           echo "✓ ArgoCD sync triggered for backend update"
 
       - name: Build backend image (PR)
