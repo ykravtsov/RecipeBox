@@ -228,6 +228,11 @@ jobs:
           kubectl patch secret recipebox-backend-secret --type=merge -p "${PATCH_JSON}" \
             && echo "✓ Secret patched" || echo "WARNING: Secret patch failed"
 
+          # Verify secret (GitHub Actions auto-masks known secret values)
+          echo "=== Current DATABASE_URL in secret (password auto-masked) ==="
+          kubectl get secret recipebox-backend-secret -o jsonpath='{.data.DATABASE_URL}' \
+            | base64 -d || true
+
           # Ensure PostgreSQL password matches GitHub secret
           echo "Resetting PostgreSQL admin password..."
           az postgres flexible-server update \
