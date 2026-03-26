@@ -224,8 +224,8 @@ jobs:
             --ignore-not-found || true
 
           # Force pods to pull new 'latest' image
-          kubectl rollout restart deployment -l app.kubernetes.io/instance=recipebox
-          kubectl rollout status deployment -l app.kubernetes.io/instance=recipebox --timeout=120s || true
+          kubectl rollout restart deployment/recipebox-frontend deployment/recipebox-backend || true
+          kubectl rollout status deployment/recipebox-frontend --timeout=120s || true
           echo "✓ ArgoCD sync triggered for backend update"
 
       - name: Build backend image (PR)
@@ -394,8 +394,8 @@ jobs:
           argocd app wait recipebox --timeout 180 || true
 
           # Force pods to pull new 'latest' image
-          kubectl rollout restart deployment -l app.kubernetes.io/instance=recipebox
-          kubectl rollout status deployment -l app.kubernetes.io/instance=recipebox --timeout=120s || true
+          kubectl rollout restart deployment/recipebox-frontend deployment/recipebox-backend || true
+          kubectl rollout status deployment/recipebox-frontend --timeout=120s || true
           echo "✓ ArgoCD sync triggered for frontend update"
 
       - name: Build frontend image (PR)
