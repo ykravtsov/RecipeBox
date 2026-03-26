@@ -222,12 +222,12 @@ jobs:
           az postgres flexible-server update \
             --resource-group "rg-recipebox-${{ steps.meta.outputs.environment }}" \
             --name "recipebox-pg-${{ steps.meta.outputs.environment }}" \
-            --admin-password "${{ secrets.POSTGRES_PASSWORD }}" || true
+            --admin-password "${{ secrets.POSTGRES_PASSWORD }}" 2>&1 | tail -3 || true
 
           # Patch backend secret with real credentials
           kubectl patch secret recipebox-backend-secret \
             -p "{\"stringData\":{\"XAI_API_KEY\":\"${{ secrets.GROK_API_KEY }}\",\"DATABASE_URL\":\"postgres://pgadmin:${{ secrets.POSTGRES_PASSWORD }}@recipebox-pg-${{ steps.meta.outputs.environment }}.postgres.database.azure.com/recipebox?sslmode=require\"}}" \
-            --ignore-not-found || true
+            || true
 
           # Force pods to pull new 'latest' image
           kubectl rollout restart deployment/recipebox-frontend deployment/recipebox-backend || true
