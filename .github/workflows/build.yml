@@ -217,6 +217,15 @@ jobs:
 
           argocd app sync recipebox --force
           argocd app wait recipebox --timeout 180 || true
+
+          # Patch XAI_API_KEY secret with real key
+          kubectl patch secret recipebox-backend-secret \
+            -p "{\"stringData\":{\"XAI_API_KEY\":\"${{ secrets.GROK_API_KEY }}\"}}" \
+            --ignore-not-found || true
+
+          # Force pods to pull new 'latest' image
+          kubectl rollout restart deployment -l app.kubernetes.io/instance=recipebox
+          kubectl rollout status deployment -l app.kubernetes.io/instance=recipebox --timeout=120s || true
           echo "✓ ArgoCD sync triggered for backend update"
 
       - name: Build backend image (PR)
@@ -383,6 +392,10 @@ jobs:
           # Force sync so ArgoCD pulls the latest image
           argocd app sync recipebox --force
           argocd app wait recipebox --timeout 180 || true
+
+          # Force pods to pull new 'latest' image
+          kubectl rollout restart deployment -l app.kubernetes.io/instance=recipebox
+          kubectl rollout status deployment -l app.kubernetes.io/instance=recipebox --timeout=120s || true
           echo "✓ ArgoCD sync triggered for frontend update"
 
       - name: Build frontend image (PR)
