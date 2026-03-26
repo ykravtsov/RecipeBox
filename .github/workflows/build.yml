@@ -218,9 +218,9 @@ jobs:
           argocd app sync recipebox --force
           argocd app wait recipebox --timeout 180 || true
 
-          # Patch XAI_API_KEY secret with real key
+          # Patch backend secret with real credentials
           kubectl patch secret recipebox-backend-secret \
-            -p "{\"stringData\":{\"XAI_API_KEY\":\"${{ secrets.GROK_API_KEY }}\"}}" \
+            -p "{\"stringData\":{\"XAI_API_KEY\":\"${{ secrets.GROK_API_KEY }}\",\"DATABASE_URL\":\"postgres://pgadmin:${{ secrets.POSTGRES_PASSWORD }}@recipebox-pg-dev.postgres.database.azure.com/recipebox?sslmode=require\"}}" \
             --ignore-not-found || true
 
           # Force pods to pull new 'latest' image
