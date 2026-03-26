@@ -1,15 +1,18 @@
 const { Given, When, Then } = require("@cucumber/cucumber");
 const { expect } = require("@playwright/test");
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:4200";
+const API_URL = process.env.API_URL || "http://localhost:3000";
+
 Given("I am on the recipes page", async function () {
-  await this.page.goto("http://localhost:4200/recipes");
+  await this.page.goto(`${BASE_URL}/recipes`);
 });
 
 Given("I have created a recipe", async function () {
   const token = await this.page.evaluate(() =>
     localStorage.getItem("authToken"),
   );
-  const response = await fetch("http://localhost:3000/recipes", {
+  const response = await fetch(`${API_URL}/recipes`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -89,7 +92,7 @@ Then(
 );
 
 Given("I am on the add recipe page", async function () {
-  await this.page.goto("http://localhost:4200/recipes/add");
+  await this.page.goto(`${BASE_URL}/recipes/add`);
 });
 
 When(
@@ -186,7 +189,7 @@ Given("I have created a recipe with tags {string}", async function (tags) {
   const token = await this.page.evaluate(() =>
     localStorage.getItem("authToken"),
   );
-  const response = await fetch("http://localhost:3000/recipes", {
+  const response = await fetch(`${API_URL}/recipes`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

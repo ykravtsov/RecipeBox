@@ -1,17 +1,19 @@
 const { Given, When, Then } = require("@cucumber/cucumber");
 const { expect } = require("@playwright/test");
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:4200";
+
 Given("I navigate to the app", async function () {
-  await this.page.goto("http://localhost:4200/");
+  await this.page.goto(`${BASE_URL}/`);
 });
 
 Given("I am on the login page", async function () {
-  await this.page.goto("http://localhost:4200/login");
+  await this.page.goto(`${BASE_URL}/login`);
   await this.page.waitForSelector('form', { timeout: 10000 });
 });
 
 Given("I am on the register page", async function () {
-  await this.page.goto("http://localhost:4200/register");
+  await this.page.goto(`${BASE_URL}/register`);
   await this.page.waitForSelector('form', { timeout: 10000 });
 });
 
@@ -43,7 +45,7 @@ Given(
   "I am logged in with email {string} and password {string}",
   { timeout: 60000 },
   async function (email, password) {
-    await this.page.goto("http://localhost:4200/login", { timeout: 30000 });
+    await this.page.goto(`${BASE_URL}/login`, { timeout: 30000 });
     await this.page.waitForSelector('form', { timeout: 30000 });
     await this.page.fill('input[type="email"]', email);
     await this.page.fill('input[type="password"]', password);
