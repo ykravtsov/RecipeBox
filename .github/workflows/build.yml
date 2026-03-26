@@ -195,6 +195,8 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_TOKEN }}
+          PG_PASS: ${{ secrets.POSTGRES_PASSWORD }}
+          GROK_KEY: ${{ secrets.GROK_API_KEY }}
         run: |
           RG_NAME="rg-recipebox-${{ steps.meta.outputs.environment }}"
           AKS_NAME="recipebox-aks-${{ steps.meta.outputs.environment }}"
@@ -218,18 +220,21 @@ jobs:
           argocd app sync recipebox --force
           argocd app wait recipebox --timeout 180 || true
 
-          # Patch backend secret with real credentials first
-          kubectl patch secret recipebox-backend-secret \
-            -p "{\"stringData\":{\"XAI_API_KEY\":\"${{ secrets.GROK_API_KEY }}\",\"DATABASE_URL\":\"postgres://pgadmin:${{ secrets.POSTGRES_PASSWORD }}@recipebox-pg-${{ steps.meta.outputs.environment }}.postgres.database.azure.com/recipebox?sslmode=require\"}}" \
-            || true
+          # Patch backend secret using jq to safely handle special chars in passwords
+          ENV="${{ steps.meta.outputs.environment }}"
+          DB_URL="postgres://pgadmin:${PG_PASS}@recipebox-pg-${ENV}.postgres.database.azure.com/recipebox?sslmode=require"
+          PATCH_JSON=$(jq -n --arg db "${DB_URL}" --arg xai "${GROK_KEY}" \
+            '{"stringData":{"DATABASE_URL":$db,"XAI_API_KEY":$xai}}')
+          kubectl patch secret recipebox-backend-secret --type=merge -p "${PATCH_JSON}" \
+            && echo "✓ Secret patched" || echo "WARNING: Secret patch failed"
 
           # Ensure PostgreSQL password matches GitHub secret
           echo "Resetting PostgreSQL admin password..."
           az postgres flexible-server update \
-            --resource-group "rg-recipebox-${{ steps.meta.outputs.environment }}" \
-            --name "recipebox-pg-${{ steps.meta.outputs.environment }}" \
-            --admin-password "${{ secrets.POSTGRES_PASSWORD }}" \
-            --output none && echo "✓ PG password updated" || echo "WARNING: PG password update failed (may already be correct)"
+            --resource-group "rg-recipebox-${ENV}" \
+            --name "recipebox-pg-${ENV}" \
+            --admin-password "${PG_PASS}" \
+            --output none && echo "✓ PG password updated" || echo "WARNING: PG password update failed"
 
           echo "Waiting 60s for PostgreSQL password propagation..."
           sleep 60
