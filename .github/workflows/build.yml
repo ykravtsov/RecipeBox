@@ -241,8 +241,20 @@ jobs:
             --admin-password "${PG_PASS}" \
             --output none && echo "✓ PG password updated" || echo "WARNING: PG password update failed"
 
-          echo "Waiting 60s for PostgreSQL password propagation..."
-          sleep 60
+          # Verify DB connection with new password
+          echo "Testing database connection..."
+          az postgres flexible-server execute \
+            --resource-group "rg-recipebox-${ENV}" \
+            --name "recipebox-pg-${ENV}" \
+            --admin-user "pgadmin" \
+            --admin-password "${PG_PASS}" \
+            --database-name "recipebox" \
+            --querytext "SELECT version();" \
+            && echo "✓ Database connection verified with POSTGRES_PASSWORD" \
+            || echo "✗ Database connection FAILED - password may be wrong"
+
+          echo "Waiting 30s for PostgreSQL password propagation..."
+          sleep 30
 
           # Force pods to pull new 'latest' image with updated secret
           kubectl rollout restart deployment/recipebox-frontend deployment/recipebox-backend || true
