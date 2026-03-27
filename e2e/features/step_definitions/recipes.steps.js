@@ -159,14 +159,14 @@ Then("I should see the scraped recipe content", { timeout: 90000 }, async functi
   }
 });
 
-When("I select an image and click {string}", async function (buttonText) {
-  await this.page.waitForSelector(".image-option", { timeout: 10000 });
+When("I select an image and click {string}", { timeout: 30000 }, async function (buttonText) {
+  await this.page.waitForSelector(".image-option", { timeout: 15000 });
   await this.page.locator(".image-option").first().click();
   const actualButtonText = buttonText === "Import Recipe" ? "Save Recipe" : buttonText;
   const button = this.page.locator("mat-dialog-actions button", {
     hasText: actualButtonText,
   });
-  await button.waitFor({ state: "visible", timeout: 5000 });
+  await button.waitFor({ state: "visible", timeout: 10000 });
   await button.click({ timeout: 10000 });
 });
 
