@@ -3,6 +3,9 @@ const { expect } = require("@playwright/test");
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:4200";
 
+// Generate a unique email for register tests to avoid duplicate conflicts
+const UNIQUE_REGISTER_EMAIL = `e2eregtest+${Date.now()}@recipebox.com`;
+
 Given("I navigate to the app", async function () {
   await this.page.goto(`${BASE_URL}/`);
 });
@@ -20,7 +23,9 @@ Given("I am on the register page", { timeout: 30000 }, async function () {
 When(
   "I enter email {string} and password {string}",
   async function (email, password) {
-    await this.page.fill('input[type="email"]', email);
+    // Replace the template e2eregtest email with a unique one per run
+    const actualEmail = email === "e2eregtest@recipebox.com" ? UNIQUE_REGISTER_EMAIL : email;
+    await this.page.fill('input[type="email"]', actualEmail);
     await this.page.fill('input[type="password"]', password);
   },
 );
