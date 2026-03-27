@@ -37,3 +37,10 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+  ignoreDifferences:
+  - group: ""
+    kind: Secret
+    name: recipebox-backend-secret
+    jsonPointers:
+    - /data
+    - /stringData
