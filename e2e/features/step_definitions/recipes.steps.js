@@ -3,6 +3,7 @@ const { expect } = require("@playwright/test");
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:4200";
 const API_URL = process.env.API_URL || "http://localhost:3000";
+const UNIQUE_SUFFIX = Date.now();
 
 Given("I am on the recipes page", async function () {
   await this.page.goto(`${BASE_URL}/recipes`);
@@ -196,7 +197,7 @@ Given("I have created a recipe with tags {string}", async function (tags) {
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      title: "Tagged Test Recipe",
+      title: `Tagged Test Recipe ${UNIQUE_SUFFIX}`,
       ingredients: [{ name: "pasta", quantity: "1", unit: "lb" }],
       steps: ["Cook pasta"],
       tags: tags.split(","),
@@ -223,13 +224,13 @@ Then(
   "I should see the recipe with tags {string} in the list",
   async function (tags) {
     // Search results appear in the main list - wait for the recipe to be visible
-    await expect(this.page.getByText("Tagged Test Recipe")).toBeVisible({ timeout: 10000 });
+    await expect(this.page.getByText(`Tagged Test Recipe ${UNIQUE_SUFFIX}`).first()).toBeVisible({ timeout: 10000 });
   },
 );
 
 Then("I should not see other recipes", async function () {
   // After search filter, only tagged recipe should appear in results
-  await expect(this.page.getByText("Tagged Test Recipe")).toBeVisible({ timeout: 5000 });
+  await expect(this.page.getByText(`Tagged Test Recipe ${UNIQUE_SUFFIX}`).first()).toBeVisible({ timeout: 5000 });
   // Verify unrelated recipes are not shown (check that search results section is active)
   await expect(this.page.getByText("Search Results")).toBeVisible({ timeout: 5000 });
 });
