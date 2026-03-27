@@ -179,52 +179,36 @@ impl MigrationName for AddRecipeFields {
 #[async_trait::async_trait]
 impl MigrationTrait for AddRecipeFields {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Alias::new("recipes"))
-                    .add_column(
-                        ColumnDef::new(Alias::new("description"))
-                            .string()
-                            .null(),
-                    )
-                    .add_column(
-                        ColumnDef::new(Alias::new("image_url"))
-                            .string()
-                            .null(),
-                    )
-                    .add_column(
-                        ColumnDef::new(Alias::new("tags"))
-                            .json()
-                            .null(),
-                    )
-                    .add_column(
-                        ColumnDef::new(Alias::new("prep_time"))
-                            .integer()
-                            .null(),
-                    )
-                    .add_column(
-                        ColumnDef::new(Alias::new("cook_time"))
-                            .integer()
-                            .null(),
-                    )
-                    .rename_column(Alias::new("instructions"), Alias::new("steps"))
-                    .to_owned(),
-            )
-            .await?;
-        // Change steps to json
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Alias::new("recipes"))
-                    .modify_column(
-                        ColumnDef::new(Alias::new("steps"))
-                            .json()
-                            .null(),
-                    )
-                    .to_owned(),
-            )
-            .await
+        let db = manager.get_connection();
+        // Use IF NOT EXISTS for idempotent column additions
+        db.execute_unprepared(
+            "ALTER TABLE recipes \
+             ADD COLUMN IF NOT EXISTS description VARCHAR, \
+             ADD COLUMN IF NOT EXISTS image_url VARCHAR, \
+             ADD COLUMN IF NOT EXISTS tags JSONB, \
+             ADD COLUMN IF NOT EXISTS prep_time INTEGER, \
+             ADD COLUMN IF NOT EXISTS cook_time INTEGER"
+        ).await?;
+        // Rename instructions -> steps only if instructions column exists
+        db.execute_unprepared(
+            "DO $$ BEGIN \
+               IF EXISTS (SELECT 1 FROM information_schema.columns \
+                          WHERE table_name='recipes' AND column_name='instructions') THEN \
+                 ALTER TABLE recipes RENAME COLUMN instructions TO steps; \
+               END IF; \
+             END $$"
+        ).await?;
+        // Change steps column type to JSONB if it's not already
+        db.execute_unprepared(
+            "DO $$ BEGIN \
+               IF EXISTS (SELECT 1 FROM information_schema.columns \
+                          WHERE table_name='recipes' AND column_name='steps' \
+                          AND data_type != 'jsonb') THEN \
+                 ALTER TABLE recipes ALTER COLUMN steps TYPE JSONB USING steps::jsonb; \
+               END IF; \
+             END $$"
+        ).await?;
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
