@@ -10,7 +10,7 @@ impl MigratorTrait for Migrator {
             Box::new(CreateUsersTable),
             Box::new(CreateRecipesTable),
             Box::new(AddUserIdToRecipesTable),
-            // Box::new(AddRecipeFields), // Commented out since schema was manually updated
+            Box::new(AddRecipeFields),
         ]
     }
 }
@@ -168,109 +168,78 @@ impl MigrationTrait for AddUserIdToRecipesTable {
     }
 }
 
-// Commented out AddRecipeFields migration since schema was manually updated
-// pub struct AddRecipeFields;
+pub struct AddRecipeFields;
 
-// impl MigrationName for AddRecipeFields {
-//     fn name(&self) -> &str {
-//         "m20240101000003_add_recipe_fields"
-//     }
-// }
+impl MigrationName for AddRecipeFields {
+    fn name(&self) -> &str {
+        "m20240101000003_add_recipe_fields"
+    }
+}
 
-// #[async_trait::async_trait]
-// impl MigrationTrait for AddRecipeFields {
-//     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-//         manager
-//             .alter_table(
-//                 Table::alter()
-//                     .table(Alias::new("recipes"))
-//                     .add_column(
-//                         ColumnDef::new(Alias::new("description"))
-//                             .string()
-//                             .null(),
-//                     )
-//                     .add_column(
-//                         ColumnDef::new(Alias::new("image_url"))
-//                             .string()
-//                             .null(),
-//                     )
-//                     .add_column(
-//                         ColumnDef::new(Alias::new("tags"))
-//                             .json()
-//                             .null(),
-//                     )
-//                     .add_column(
-//                         ColumnDef::new(Alias::new("prep_time"))
-//                             .integer()
-//                             .null(),
-//                     )
-//                     .add_column(
-//                         ColumnDef::new(Alias::new("cook_time"))
-//                             .integer()
-//                             .null(),
-//                     )
-//                     .rename_column(Alias::new("instructions"), Alias::new("steps"))
-//                     .to_owned(),
-//             )
-//             .await?;
-//         // Convert text instructions to JSON array - commented out due to compilation issues
-//         // manager
-//         //     .exec_stmt(
-//         //         Statement::from_string(
-//         //             manager.get_database_backend(),
-//         //             r#"UPDATE recipes SET steps = json_build_array(trim(regexp_split_to_array(steps, E'\\n+'))::text[]) WHERE steps IS NOT NULL AND steps != ''"#.to_owned(),
-//         //         )
-//         //     )
-//         //     .await?;
-//         // Change steps to json
-//         manager
-//             .alter_table(
-//                 Table::alter()
-//                     .table(Alias::new("recipes"))
-//                     .modify_column(
-//                         ColumnDef::new(Alias::new("steps"))
-//                             .json()
-//                             .null(),
-//                     )
-//                     .to_owned(),
-//             )
-//             .await
-//     }
+#[async_trait::async_trait]
+impl MigrationTrait for AddRecipeFields {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Alias::new("recipes"))
+                    .add_column(
+                        ColumnDef::new(Alias::new("description"))
+                            .string()
+                            .null(),
+                    )
+                    .add_column(
+                        ColumnDef::new(Alias::new("image_url"))
+                            .string()
+                            .null(),
+                    )
+                    .add_column(
+                        ColumnDef::new(Alias::new("tags"))
+                            .json()
+                            .null(),
+                    )
+                    .add_column(
+                        ColumnDef::new(Alias::new("prep_time"))
+                            .integer()
+                            .null(),
+                    )
+                    .add_column(
+                        ColumnDef::new(Alias::new("cook_time"))
+                            .integer()
+                            .null(),
+                    )
+                    .rename_column(Alias::new("instructions"), Alias::new("steps"))
+                    .to_owned(),
+            )
+            .await?;
+        // Change steps to json
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Alias::new("recipes"))
+                    .modify_column(
+                        ColumnDef::new(Alias::new("steps"))
+                            .json()
+                            .null(),
+                    )
+                    .to_owned(),
+            )
+            .await
+    }
 
-//     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-//         manager
-//             .alter_table(
-//                 Table::alter()
-//                     .table(Alias::new("recipes"))
-//                     .drop_column(Alias::new("description"))
-//                     .drop_column(Alias::new("image_url"))
-//                     .drop_column(Alias::new("tags"))
-//                     .drop_column(Alias::new("prep_time"))
-//                     .drop_column(Alias::new("cook_time"))
-//                     .rename_column(Alias::new("steps"), Alias::new("instructions"))
-//                     .to_owned(),
-//             )
-//             .await?;
-//         // Convert JSON array steps back to text - commented out due to compilation issues
-//         // manager
-//         //     .exec_stmt(
-//         //         Statement::from_string(
-//         //             manager.get_database_backend(),
-//         //             r#"UPDATE recipes SET instructions = array_to_string(instructions::text[], E'\n') WHERE instructions IS NOT NULL"#.to_owned(),
-//         //         )
-//         //     )
-//         //     .await?;
-//         manager
-//             .alter_table(
-//                 Table::alter()
-//                     .table(Alias::new("recipes"))
-//                     .modify_column(
-//                         ColumnDef::new(Alias::new("steps"))
-//                             .text()
-//                             .not_null(),
-//                     )
-//                     .to_owned(),
-//             )
-//             .await
-//     }
-// }
+    async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Alias::new("recipes"))
+                    .drop_column(Alias::new("description"))
+                    .drop_column(Alias::new("image_url"))
+                    .drop_column(Alias::new("tags"))
+                    .drop_column(Alias::new("prep_time"))
+                    .drop_column(Alias::new("cook_time"))
+                    .rename_column(Alias::new("steps"), Alias::new("instructions"))
+                    .to_owned(),
+            )
+            .await
+    }
+}
