@@ -180,7 +180,7 @@ impl MigrationName for AddRecipeFields {
 impl MigrationTrait for AddRecipeFields {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
-        // Use IF NOT EXISTS for idempotent column additions
+        // Add new columns idempotently
         db.execute_unprepared(
             "ALTER TABLE recipes \
              ADD COLUMN IF NOT EXISTS description VARCHAR, \
@@ -189,25 +189,27 @@ impl MigrationTrait for AddRecipeFields {
              ADD COLUMN IF NOT EXISTS prep_time INTEGER, \
              ADD COLUMN IF NOT EXISTS cook_time INTEGER"
         ).await?;
-        // Rename instructions -> steps only if instructions column exists
-        db.execute_unprepared(
-            "DO $$ BEGIN \
-               IF EXISTS (SELECT 1 FROM information_schema.columns \
-                          WHERE table_name='recipes' AND column_name='instructions') THEN \
-                 ALTER TABLE recipes RENAME COLUMN instructions TO steps; \
-               END IF; \
-             END $$"
-        ).await?;
-        // Change steps column type to JSONB if it's not already
-        db.execute_unprepared(
-            "DO $$ BEGIN \
-               IF EXISTS (SELECT 1 FROM information_schema.columns \
-                          WHERE table_name='recipes' AND column_name='steps' \
-                          AND data_type != 'jsonb') THEN \
-                 ALTER TABLE recipes ALTER COLUMN steps TYPE JSONB USING steps::jsonb; \
-               END IF; \
-             END $$"
-        ).await?;
+        // Rename instructions -> steps only if instructions column still exists
+        // (may have been done manually already)
+        let has_instructions: bool = db.execute_unprepared(
+            "SELECT column_name FROM information_schema.columns \
+             WHERE table_name='recipes' AND column_name='instructions' LIMIT 1"
+        ).await.map(|r| r.rows_affected() > 0).unwrap_or(false);
+        if has_instructions {
+            db.execute_unprepared(
+                "ALTER TABLE recipes RENAME COLUMN instructions TO steps"
+            ).await?;
+        }
+        // Change steps to JSONB if not already jsonb
+        let needs_type_change: bool = db.execute_unprepared(
+            "SELECT column_name FROM information_schema.columns \
+             WHERE table_name='recipes' AND column_name='steps' AND data_type != 'jsonb' LIMIT 1"
+        ).await.map(|r| r.rows_affected() > 0).unwrap_or(false);
+        if needs_type_change {
+            db.execute_unprepared(
+                "ALTER TABLE recipes ALTER COLUMN steps TYPE JSONB USING steps::jsonb"
+            ).await?;
+        }
         Ok(())
     }
 
