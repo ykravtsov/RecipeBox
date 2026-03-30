@@ -1,9 +1,23 @@
 use sea_orm::entity::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+
+fn deserialize_quantity<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::String(s) => Ok(s),
+        serde_json::Value::Number(n) => Ok(n.to_string()),
+        other => Err(D::Error::custom(format!("expected string or number for quantity, got {:?}", other))),
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ingredient {
     pub name: String,
+    #[serde(deserialize_with = "deserialize_quantity")]
     pub quantity: String,
     pub unit: String,
 }

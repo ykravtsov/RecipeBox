@@ -1,49 +1,10 @@
-.full-width {
-  width: 100%;
+.import-dialog {
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.actions {
-  margin: 16px 0;
-}
-
-.scraped-recipe {
-  margin-top: 20px;
-
-  h3, h4 {
-    margin-top: 16px;
-    margin-bottom: 8px;
-  }
-
-  ul, ol {
-    padding-left: 20px;
-  }
-
-  li {
-    margin-bottom: 4px;
-  }
-}
-
-.image-selection {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.image-option {
-  border: 2px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-
-  &.selected {
-    border-color: #1976d2;
-  }
-
-  img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 4px;
-  }
+/* override mat-dialog default padding */
+:host ::ng-deep .mat-mdc-dialog-surface {
+  padding: 0 !important;
+  border-radius: 1rem !important;
 }
