@@ -1,11 +1,5 @@
 import { Component } from '@angular/core';
-
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCardModule } from '@angular/material/card';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RecipeService } from '../services/recipe.service';
@@ -15,14 +9,9 @@ import { Recipe } from '../models/recipe';
     standalone: true,
     selector: 'app-import-recipe-dialog',
     imports: [
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatCardModule,
-    FormsModule
-],
+      MatDialogModule,
+      FormsModule,
+    ],
     templateUrl: './import-recipe-dialog.component.html',
     styleUrl: './import-recipe-dialog.component.scss'
 })
@@ -42,9 +31,11 @@ export class ImportRecipeDialogComponent {
     if (!this.url) return;
 
     this.isLoading = true;
+    this.scrapedRecipe = null;
     this.recipeService.scrapeRecipe(this.url).subscribe({
       next: (recipe) => {
         this.scrapedRecipe = recipe;
+        this.selectedImageUrl = recipe.imageUrls?.[0] ?? '';
         this.isLoading = false;
       },
       error: (error) => {
@@ -60,13 +51,9 @@ export class ImportRecipeDialogComponent {
 
   saveRecipe(): void {
     if (!this.scrapedRecipe) return;
-
-    // Set imageUrl if an image was selected
     if (this.selectedImageUrl) {
       this.scrapedRecipe.imageUrl = this.selectedImageUrl;
     }
-
-    // Close dialog and return the scraped recipe data for editing
     this.dialogRef.close(this.scrapedRecipe);
   }
 

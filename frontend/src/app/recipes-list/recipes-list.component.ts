@@ -75,10 +75,13 @@ export class RecipesListComponent implements OnInit {
 
   openImportDialog(): void {
     const dialogRef = this.dialog.open(ImportRecipeDialogComponent, {
-      width: '500px'
+      width: '900px',
+      maxWidth: '95vw'
     });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) this.loadRecipes();
+    dialogRef.afterClosed().subscribe((scrapedRecipe: Recipe | undefined) => {
+      if (scrapedRecipe) {
+        this.router.navigate(['/recipes/add'], { state: { scrapedRecipe } });
+      }
     });
   }
 
