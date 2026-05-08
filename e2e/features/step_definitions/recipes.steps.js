@@ -107,10 +107,8 @@ When(
     if (currentUrl.includes('login')) {
       throw new Error(`Redirected to login from add recipe page. Auth guard blocked access.`);
     }
-    // Wait for mat-card to render (Angular Material add recipe form)
-    await this.page.waitForSelector('mat-card, [class*="mat-card"]', { timeout: 15000 });
-    // Fill the title input using ng-reflect attribute (works in Angular dev mode)
-    const titleInput = this.page.locator('input[ng-reflect-name="title"], input[formcontrolname="title"]').first();
+    // Fill the title input directly (skip card wait)
+    const titleInput = this.page.locator('input[formcontrolname="title"], input[ng-reflect-name="title"]').first();
     await titleInput.waitFor({ state: 'visible', timeout: 10000 });
     await titleInput.fill(title);
     // Fill description textarea
