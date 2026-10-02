@@ -12,8 +12,7 @@ obj/
 # Environment and configuration files with sensitive data
 .env
 appsettings.json
-# Keep appsettings.Development.json as a template
-!appsettings.Development.json
+appsettings.*.json
 
 # Logs
 *.log

@@ -198,6 +198,7 @@ jobs:
           GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_TOKEN }}
           PG_PASS: ${{ secrets.POSTGRES_PASSWORD }}
           GROK_KEY: ${{ secrets.GROK_API_KEY }}
+          JWT_KEY: ${{ secrets.JWT_SECRET }}
         run: |
           RG_NAME="rg-recipebox-${{ steps.meta.outputs.environment }}"
           AKS_NAME="recipebox-aks-${{ steps.meta.outputs.environment }}"
@@ -224,15 +225,13 @@ jobs:
           # Patch backend secret using jq to safely handle special chars in passwords
           ENV="${{ steps.meta.outputs.environment }}"
           DB_URL="postgres://pgadmin:${PG_PASS}@recipebox-pg-${ENV}.postgres.database.azure.com/recipebox?sslmode=require"
-          PATCH_JSON=$(jq -n --arg db "${DB_URL}" --arg xai "${GROK_KEY}" \
-            '{"stringData":{"DATABASE_URL":$db,"XAI_API_KEY":$xai}}')
+          PATCH_JSON=$(jq -n --arg db "${DB_URL}" --arg xai "${GROK_KEY}" --arg jwt "${JWT_KEY}" \
+            '{"stringData":{"DATABASE_URL":$db,"XAI_API_KEY":$xai,"JWT_SECRET":$jwt}}')
           kubectl patch secret recipebox-backend-secret --type=merge -p "${PATCH_JSON}" \
             && echo "✓ Secret patched" || echo "WARNING: Secret patch failed"
 
-          # Verify secret (GitHub Actions auto-masks known secret values)
-          echo "=== Current DATABASE_URL in secret (password auto-masked) ==="
-          kubectl get secret recipebox-backend-secret -o jsonpath='{.data.DATABASE_URL}' \
-            | base64 -d || true
+          kubectl get secret recipebox-backend-secret -o jsonpath='{.data.DATABASE_URL}' >/dev/null \
+            && echo "✓ DATABASE_URL present" || echo "WARNING: DATABASE_URL missing"
 
           # Ensure PostgreSQL password matches GitHub secret
           echo "Resetting PostgreSQL admin password..."

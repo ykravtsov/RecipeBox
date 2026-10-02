@@ -69,7 +69,7 @@ Create a strong password that meets these requirements:
 - Must include number (0-9)
 - Must include special character (!@#$%^&*-_.+=\|)
 
-Example: `REDACTED
+Example: set with `gh secret set POSTGRES_PASSWORD`
 
 **How to add to GitHub:**
 1. Settings → Secrets and variables → Actions

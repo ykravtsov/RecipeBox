@@ -9,11 +9,11 @@ backend:
     port: 80
     targetPort: 3000
   database:
-    url: "postgres://pgadmin:REDACTED@recipebox-pg-dev.postgres.database.azure.com/recipebox?sslmode=require"
+    url: ""
   jwt:
-    secret: "REDACTED"
+    secret: ""
   xai:
-    apiKey: "REDACTED"
+    apiKey: ""
   resources: {}
     # limits:
     #   cpu: 100m

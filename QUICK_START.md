@@ -2,16 +2,16 @@
 
 ## ✅ Completed Setup
 
-### 1. **Azure Credentials Generated**
+### 1. **Azure Credentials**
 - Service Principal: `RecipeBoxGitHub`
 - Role: `Contributor`
-- Subscription: `REDACTED`
+- Store the service principal JSON in the `AZURE_CREDENTIALS` GitHub Actions secret. Do not commit it.
 
 ### 2. **Local Configuration**
-Created `.env` file with:
+Create a gitignored `.env` from `infra/.env.example`:
 - `ENVIRONMENT=dev` (configurable: dev/staging/prod)
 - `GITHUB_REPOSITORY_URL=https://github.com/yuriykravtsov/RecipeBox`
-- `POSTGRES_PASSWORD=REDACTED
+- `POSTGRES_PASSWORD` (local only, or the `POSTGRES_PASSWORD` GitHub secret)
 - `AZURE_CREDENTIALS` (JSON with subscription, client, secret, tenant)
 
 ### 3. **Dependencies Installed**
@@ -53,16 +53,21 @@ npx cdktf output recipebox-infra
 
 1. **Add GitHub Secrets** (Settings → Secrets and variables → Actions):
 
+```bash
+gh secret set AZURE_CREDENTIALS < azure-credentials.json
+gh secret set POSTGRES_PASSWORD
+gh secret set GROK_API_KEY
+gh secret set JWT_SECRET
+```
+
+`azure-credentials.json` (do not commit):
+
 ```json
 {
-  "AZURE_CREDENTIALS": {
-    "subscriptionId": "REDACTED",
-    "clientId": "REDACTED",
-    "clientSecret": "REDACTED",
-    "tenantId": "REDACTED"
-  },
-  "POSTGRES_PASSWORD": "REDACTED",
-  "GITHUB_REPOSITORY_URL": "https://github.com/yuriykravtsov/RecipeBox"
+  "subscriptionId": "<subscription-id>",
+  "clientId": "<client-id>",
+  "clientSecret": "<client-secret>",
+  "tenantId": "<tenant-id>"
 }
 ```
 
@@ -129,7 +134,7 @@ ENVIRONMENT=prod npx cdktf deploy
 ### Plan fails with auth error
 ```bash
 az login  # Re-authenticate
-az account set --subscription REDACTED
+az account set --subscription <subscription-id>
 ```
 
 ### Terraform not found

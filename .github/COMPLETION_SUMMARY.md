@@ -49,7 +49,7 @@ az ad sp create-for-rbac --name RecipeBoxGitHub --role Contributor
 
 # 3. Add GitHub secrets (from az output)
 gh secret set AZURE_CREDENTIALS --body '{...}'
-gh secret set POSTGRES_PASSWORD --body "REDACTED"
+gh secret set POSTGRES_PASSWORD
 
 # 4. Deploy!
 git push origin main

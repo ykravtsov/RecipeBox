@@ -24,7 +24,7 @@ gh secret set AZURE_CREDENTIALS --body '{
 }'
 
 # 6. Add password secret
-gh secret set POSTGRES_PASSWORD --body "REDACTED"
+gh secret set POSTGRES_PASSWORD
 
 # 7. Done! Push changes to deploy
 git push origin main
@@ -110,7 +110,7 @@ gh run view <run-id> --log               # View logs
 | Secret | Example Value |
 |--------|---------------|
 | `AZURE_CREDENTIALS` | `{"subscriptionId":"...","clientId":"...","clientSecret":"...","tenantId":"..."}` |
-| `POSTGRES_PASSWORD` | `REDACTED |
+| `POSTGRES_PASSWORD` | GitHub Actions secret |
 
 ---
 

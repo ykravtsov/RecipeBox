@@ -77,7 +77,7 @@ echo "$SERVICE_PRINCIPAL" > /tmp/sp.json
 gh secret set AZURE_CREDENTIALS --body "$(cat /tmp/sp.json)"
 
 # Add POSTGRES_PASSWORD secret
-gh secret set POSTGRES_PASSWORD --body "REDACTED"
+gh secret set POSTGRES_PASSWORD
 
 # Verify secrets are set
 gh secret list

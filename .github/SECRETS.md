@@ -109,6 +109,26 @@ az ad sp create-for-rbac \
 
 ---
 
+### 4. GROK_API_KEY
+
+**Purpose**: xAI API key used by the backend  
+**Type**: String  
+
+```bash
+gh secret set GROK_API_KEY
+```
+
+### 5. JWT_SECRET
+
+**Purpose**: Signing key for API JWTs. Deploy patches this into the backend Kubernetes secret.  
+**Type**: String  
+
+```bash
+gh secret set JWT_SECRET
+```
+
+---
+
 ## Verification
 
 ### Verify Secrets are Set

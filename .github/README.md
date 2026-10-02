@@ -37,7 +37,7 @@ az ad sp create-for-rbac \
 
 # 4. Add GitHub secrets (replace with values from step 3)
 gh secret set AZURE_CREDENTIALS --body '{...}'  # JSON from az output
-gh secret set POSTGRES_PASSWORD --body "REDACTED"
+gh secret set POSTGRES_PASSWORD
 
 # 5. Deploy by pushing to main
 git push origin main
@@ -113,7 +113,7 @@ Requirements:
 - Must include digit (0-9)
 - Must include special character (!@#$%^&*-_.+=\|)
 
-Example: REDACTED
+Example: set with `gh secret set POSTGRES_PASSWORD`
 ```
 
 ---
