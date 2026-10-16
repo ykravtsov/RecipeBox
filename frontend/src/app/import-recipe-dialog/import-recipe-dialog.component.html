@@ -1,10 +1,53 @@
 <div class="import-dialog">
   <!-- Header -->
   <div class="px-8 pt-8 pb-6 border-b border-outline-variant/20">
-    <h2 class="font-headline text-3xl font-black text-primary mb-2">Import from URL</h2>
-    <p class="text-on-surface-variant text-sm">Paste a link to any recipe website. Our AI will extract the ingredients and instructions automatically.</p>
+    <h2 class="font-headline text-3xl font-black text-primary mb-2">Import recipe</h2>
+    <p class="text-on-surface-variant text-sm">Paste a link, or photograph a cookbook page. You'll review the title, ingredients, and steps before saving.</p>
+    <div class="flex gap-2 mt-5">
+      <button type="button" (click)="mode = 'url'"
+        class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest"
+        [class.bg-primary]="mode === 'url'"
+        [class.text-on-primary]="mode === 'url'"
+        [class.bg-surface-container]="mode !== 'url'"
+        [class.text-on-surface-variant]="mode !== 'url'">
+        From URL
+      </button>
+      <button type="button" (click)="mode = 'photo'"
+        class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest"
+        [class.bg-primary]="mode === 'photo'"
+        [class.text-on-primary]="mode === 'photo'"
+        [class.bg-surface-container]="mode !== 'photo'"
+        [class.text-on-surface-variant]="mode !== 'photo'">
+        From photo
+      </button>
+    </div>
   </div>
 
+  @if (mode === 'photo') {
+    <div class="px-8 py-6">
+      <p class="text-sm text-on-surface-variant mb-4">
+        @if (useCamera) {
+          Take a photo of the cookbook page. The camera opens on your phone.
+        } @else {
+          Upload a photo of the cookbook page.
+        }
+      </p>
+      <label class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-4 rounded-lg font-bold text-sm uppercase tracking-widest cursor-pointer">
+        <span class="material-symbols-outlined text-base">{{ useCamera ? 'photo_camera' : 'upload' }}</span>
+        {{ useCamera ? 'Take photo' : 'Upload photo' }}
+        <input
+          data-testid="cookbook-photo"
+          class="sr-only"
+          type="file"
+          accept="image/*"
+          [attr.capture]="useCamera ? 'environment' : null"
+          (change)="onPhotoSelected($event)" />
+      </label>
+      @if (isLoading) {
+        <p class="text-sm text-on-surface-variant mt-4">Reading the page…</p>
+      }
+    </div>
+  } @else {
   <!-- URL Input -->
   <div class="px-8 py-6">
     <div class="flex flex-col sm:flex-row gap-3">
@@ -29,7 +72,15 @@
         }
       </button>
     </div>
+    @if (errorMessage && mode === 'url') {
+      <p class="text-error text-sm mt-3" role="alert">{{ errorMessage }}</p>
+    }
   </div>
+  }
+
+  @if (errorMessage && mode === 'photo') {
+    <p class="px-8 text-error text-sm" role="alert">{{ errorMessage }}</p>
+  }
 
   <!-- Preview Section -->
   @if (scrapedRecipe) {

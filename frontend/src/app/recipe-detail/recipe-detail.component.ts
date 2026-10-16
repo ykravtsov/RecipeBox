@@ -4,11 +4,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RecipeService } from '../services/recipe.service';
 import { Recipe } from '../models/recipe';
+import { BottomNavComponent } from '../bottom-nav/bottom-nav.component';
 
 @Component({
     standalone: true,
     selector: 'app-recipe-detail',
-    imports: [FormsModule, RouterLink],
+    imports: [FormsModule, RouterLink, BottomNavComponent],
     templateUrl: './recipe-detail.component.html',
     styleUrl: './recipe-detail.component.scss'
 })

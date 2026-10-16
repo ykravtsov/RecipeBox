@@ -1,14 +1,14 @@
 <!-- TopNavBar -->
 <header class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-xl shadow-sm">
-  <nav class="flex justify-between items-center px-8 py-4 max-w-[1440px] mx-auto w-full">
-    <div class="flex items-center gap-12">
-      <span class="font-headline italic text-2xl text-primary">RecipeBox</span>
+  <nav class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-8 sm:py-4 max-w-[1440px] mx-auto w-full">
+    <div class="flex items-center gap-6 md:gap-12 min-w-0">
+      <a data-testid="site-logo" routerLink="/recipes" class="font-headline italic text-xl sm:text-2xl text-primary shrink-0 leading-none">RecipeBox</a>
       <div class="hidden md:flex items-center gap-8">
         <a class="text-primary font-bold border-b-2 border-[#496455] pb-1 font-body text-sm" routerLink="/recipes">Discover</a>
-        <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-body text-sm" routerLink="/recipes">My Box</a>
+        <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-body text-sm" routerLink="/saved">My Box</a>
       </div>
     </div>
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-2 sm:gap-4 ml-auto">
       <div class="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2 w-64">
         <span class="material-symbols-outlined text-on-surface-variant text-sm">search</span>
         <input
@@ -19,7 +19,7 @@
           (keyup.enter)="addSearchTerm()"
           />
       </div>
-      <button (click)="openImportDialog()" class="bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-bold hover:scale-95 active:scale-90 duration-200 ease-in-out transition-transform">
+      <button data-testid="import-recipe-button" (click)="openImportDialog()" class="shrink-0 bg-primary text-on-primary px-3 py-2 sm:px-6 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap hover:scale-95 active:scale-90 duration-200 ease-in-out transition-transform">
         Import Recipe
       </button>
       <button (click)="logout()" class="text-primary hover:bg-surface-container/50 rounded-lg p-2 transition-all">
@@ -32,8 +32,35 @@
   </nav>
 </header>
 
-<main class="pt-24 pb-20 max-w-[1440px] mx-auto px-8">
+<main class="pt-28 pb-24 max-w-[1440px] mx-auto px-4 sm:px-8">
+  @if (view === 'search') {
+    <section id="recipe-search" class="mb-12">
+      <span class="text-[#496455] font-bold tracking-[0.2em] text-xs uppercase mb-2 block">Find a recipe</span>
+      <h2 class="font-headline text-4xl sm:text-5xl text-on-background mb-6">Search</h2>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input
+          #searchInput
+          class="flex-1 bg-surface-container rounded-xl px-4 py-3 text-sm placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          placeholder="Search recipes..."
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="addSearchTerm()"
+        />
+        <button type="button" (click)="addSearchTerm()" class="bg-primary text-on-primary px-6 py-3 rounded-xl text-sm font-bold">Search</button>
+      </div>
+    </section>
+  }
+
+  @if (view === 'saved') {
+    <section class="mb-12">
+      <span class="text-[#496455] font-bold tracking-[0.2em] text-xs uppercase mb-2 block">Your collection</span>
+      <h2 class="font-headline text-4xl sm:text-5xl text-on-background">Saved</h2>
+      <p class="text-on-surface-variant mt-3 max-w-xl">Recipes you've kept in your box.</p>
+    </section>
+  }
+
   <!-- Hero Carousel placeholder -->
+  @if (view === 'feed') {
   <section class="mb-20">
     <div class="flex items-end justify-between mb-8">
       <div>
@@ -69,6 +96,7 @@
       </div>
     </div>
   </section>
+  }
 
   <!-- Search & Filter Bar -->
   @if (searchTerms.length > 0) {
@@ -91,7 +119,7 @@
   <section>
     <div class="flex justify-between items-center mb-12">
       <h2 class="font-headline text-3xl text-on-background">
-        {{ searchTerms.length > 0 ? 'Search Results' : 'Your Recipe Box' }}
+        {{ view === 'search' ? 'Search Results' : view === 'saved' ? 'Saved Recipes' : (searchTerms.length > 0 ? 'Search Results' : 'Your Recipe Box') }}
       </h2>
       <div class="flex gap-4">
         <a routerLink="/recipes/add" class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl text-sm font-bold hover:scale-95 transition-transform">
@@ -170,25 +198,7 @@
   </section>
 </main>
 
-<!-- BottomNavBar (Mobile Only) -->
-<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 md:hidden bg-[#fbf9f5] shadow-[0_-4px_20px_rgba(2,28,16,0.06)] z-50 rounded-t-3xl">
-  <a class="flex flex-col items-center justify-center bg-secondary-container text-primary rounded-2xl px-5 py-2" routerLink="/recipes">
-    <span class="material-symbols-outlined">restaurant</span>
-    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Feed</span>
-  </a>
-  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2 hover:bg-surface-container rounded-xl" href="#">
-    <span class="material-symbols-outlined">search</span>
-    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Search</span>
-  </a>
-  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2 hover:bg-surface-container rounded-xl" href="#">
-    <span class="material-symbols-outlined">style</span>
-    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Saved</span>
-  </a>
-  <button (click)="logout()" class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2 hover:bg-surface-container rounded-xl">
-    <span class="material-symbols-outlined">logout</span>
-    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Out</span>
-  </button>
-</nav>
+<app-bottom-nav></app-bottom-nav>
 
 <!-- FAB -->
 <a routerLink="/recipes/add" class="fixed right-8 bottom-8 md:bottom-12 w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl z-40 hover:scale-105 transition-transform">

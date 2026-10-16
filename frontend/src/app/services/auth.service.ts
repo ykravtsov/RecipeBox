@@ -9,6 +9,7 @@ import { tap } from 'rxjs/operators';
 export class AuthService {
     private apiUrl = '/api/auth';
     private tokenKey = 'authToken';
+    private emailKey = 'userEmail';
     private currentUserSubject = new BehaviorSubject<string | null>(this.getToken());
 
     constructor(private http: HttpClient) { }
@@ -22,6 +23,7 @@ export class AuthService {
             tap((response: any) => {
                 if (response.token) {
                     this.setToken(response.token);
+                    localStorage.setItem(this.emailKey, email);
                 }
             })
         );
@@ -29,7 +31,12 @@ export class AuthService {
 
     logout(): void {
         localStorage.removeItem(this.tokenKey);
+        localStorage.removeItem(this.emailKey);
         this.currentUserSubject.next(null);
+    }
+
+    getEmail(): string | null {
+        return localStorage.getItem(this.emailKey);
     }
 
     private setToken(token: string): void {

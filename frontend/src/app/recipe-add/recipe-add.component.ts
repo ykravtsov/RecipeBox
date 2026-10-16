@@ -108,9 +108,18 @@ export class RecipeAddComponent implements OnInit {
   }
 
   openImportDialog(): void {
+    this.openImport({ initialMode: 'url' });
+  }
+
+  openPhotoImport(): void {
+    this.openImport({ initialMode: 'photo' });
+  }
+
+  private openImport(data: { initialMode: 'url' | 'photo' }): void {
     const dialogRef = this.dialog.open(ImportRecipeDialogComponent, {
       width: '900px',
-      maxWidth: '95vw'
+      maxWidth: '95vw',
+      data,
     });
 
     dialogRef.afterClosed().subscribe((scrapedRecipe: Recipe | undefined) => {

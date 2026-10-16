@@ -9,7 +9,7 @@
     </div>
     <div class="flex items-center space-x-6">
       <a class="text-primary font-headline font-bold tracking-tight hover:text-primary/70 transition-colors" href="#auth-section">Log In</a>
-      <a class="editorial-gradient text-on-primary px-6 py-2.5 rounded-lg font-headline font-bold tracking-tight shadow-sm active:scale-95 transition-all duration-200" href="#auth-section">Sign Up</a>
+      <a class="editorial-gradient text-on-primary px-6 py-2.5 rounded-lg font-headline font-bold tracking-tight shadow-sm active:scale-95 transition-all duration-200" href="#signup-section">Sign Up</a>
     </div>
   </div>
 </nav>
@@ -32,7 +32,7 @@
           Curate your culinary legacy with elegant organization and AI-powered intelligence. Your recipes, refined.
         </p>
         <div class="flex flex-col sm:flex-row gap-4">
-          <a href="#auth-section" class="editorial-gradient text-on-primary text-lg px-10 py-5 rounded-lg font-headline font-bold shadow-xl hover:shadow-2xl transition-all text-center">Join for Free</a>
+          <a href="#signup-section" class="editorial-gradient text-on-primary text-lg px-10 py-5 rounded-lg font-headline font-bold shadow-xl hover:shadow-2xl transition-all text-center">Join for Free</a>
           <a routerLink="/recipes" class="bg-white/40 backdrop-blur-md border border-outline-variant/20 text-primary text-lg px-10 py-5 rounded-lg font-headline font-bold hover:bg-white/60 transition-all text-center">Explore Library</a>
         </div>
       </div>
@@ -127,7 +127,7 @@
   </section>
 
   <!-- Login & Registration Section -->
-  <section class="py-24 px-6 md:px-0 bg-surface" id="auth-section">
+  <section class="py-24 px-6 md:px-0 bg-surface scroll-mt-28" id="auth-section">
     <div class="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 min-h-[700px] overflow-hidden rounded-3xl shadow-2xl">
       <!-- Login Side -->
       <div class="bg-surface-container-lowest p-12 md:p-20 flex flex-col justify-center">
@@ -147,12 +147,12 @@
               <div class="text-error text-sm">{{ loginError }}</div>
             }
             <button class="w-full editorial-gradient text-on-primary py-4 rounded-lg font-headline font-bold text-lg shadow-lg hover:shadow-xl transition-all" type="submit">Sign In</button>
-            <p class="text-center text-sm text-on-surface-variant">Don't have an account? <a href="#auth-section" class="text-[#496455] font-bold hover:underline">Sign up →</a></p>
+            <p class="text-center text-sm text-on-surface-variant">Don't have an account? <a href="#signup-section" class="text-[#496455] font-bold hover:underline">Sign up →</a></p>
           </form>
         </div>
       </div>
       <!-- Registration Side -->
-      <div class="bg-primary p-12 md:p-20 flex flex-col justify-center relative overflow-hidden">
+      <div id="signup-section" class="bg-primary p-12 md:p-20 flex flex-col justify-center relative overflow-hidden scroll-mt-28">
         <div class="absolute inset-0 z-0">
           <img alt="Luxury ingredients" class="w-full h-full object-cover opacity-20"
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuBct-kSdlrqPppFbRPvRUHAUvsCnaEYYuuLgEQX2Twon22s0JbTjTwLh6x061VVAvOi1GLgYJVcB4K94Vg4cPoGAy6MqTfIXUg7XQns57eFSPr85ANMedS5JNUKqQ11UQbMB4YCejLwLbBfcuXuKMPa9ErIdZ8VCj7kJGkWdIgHfeO_-7sEGB-uP320fFBO8etk2a8BZ2hJt-ZYyoeVdzqeSYf4DtRQ3AfEuiPmZFlNfMbQqBViTAbH3ie_YiFU6oltoNQHD5xaHege"/>

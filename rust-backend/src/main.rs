@@ -2,8 +2,9 @@ mod entities;
 mod auth;
 mod handlers;
 mod migration;
+mod scrape;
 
-use axum::{response::IntoResponse, routing::{get, put}, Router};
+use axum::{response::IntoResponse, routing::get, Router};
 use sea_orm::{Database, EntityTrait, ColumnTrait, ActiveModelTrait, QueryFilter, Set};
 use sea_orm_migration::MigratorTrait;
 use thiserror::Error;
@@ -23,6 +24,10 @@ pub enum AppError {
     SerdeJson(#[from] serde_json::Error),
     #[error("UUID error: {0}")]
     Uuid(#[from] uuid::Error),
+    #[error("{0}")]
+    BadRequest(String),
+    #[error("Import failed: {0}")]
+    Scrape(#[from] crate::scrape::ScrapeError),
 }
 
 impl IntoResponse for AppError {
@@ -34,6 +39,8 @@ impl IntoResponse for AppError {
             AppError::Reqwest(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "HTTP error").into_response(),
             AppError::SerdeJson(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "JSON error").into_response(),
             AppError::Uuid(_) => (axum::http::StatusCode::BAD_REQUEST, "Invalid UUID").into_response(),
+            AppError::BadRequest(message) => (axum::http::StatusCode::BAD_REQUEST, message).into_response(),
+            AppError::Scrape(_) => (axum::http::StatusCode::BAD_GATEWAY, "Could not import recipe").into_response(),
         }
     }
 }
@@ -71,6 +78,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/auth/register", axum::routing::post(handlers::register))
         .route("/auth/login", axum::routing::post(handlers::login))
         .route("/scrape-recipe", axum::routing::post(handlers::scrape_recipe))
+        .route("/import-recipe-photo", axum::routing::post(handlers::import_recipe_photo))
         .route("/recipes", get(handlers::get_recipes).post(handlers::create_recipe))
         .route("/recipes/search", get(handlers::search_recipes))
         .route("/recipes/:id", get(handlers::get_recipe).put(handlers::update_recipe).delete(handlers::delete_recipe))
