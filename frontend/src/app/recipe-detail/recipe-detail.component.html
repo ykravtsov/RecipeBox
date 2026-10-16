@@ -20,7 +20,7 @@
   </div>
 </header>
 
-<main class="pt-20">
+<main class="pt-20 pb-24 md:pb-8">
   <!-- Hero Section -->
   <section class="relative w-full h-[716px] min-h-[500px] overflow-hidden">
     <img
@@ -187,18 +187,4 @@
   </section>
 </main>
 
-<!-- BottomNavBar (Mobile Only) -->
-<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 md:hidden bg-[#fbf9f5] shadow-[0_-4px_20px_rgba(2,28,16,0.06)] pb-safe rounded-t-3xl z-50">
-  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2" routerLink="/recipes">
-    <span class="material-symbols-outlined">restaurant</span>
-    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Feed</span>
-  </a>
-  <a class="flex flex-col items-center justify-center bg-secondary-container text-primary rounded-2xl px-5 py-2" href="#">
-    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;">style</span>
-    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Saved</span>
-  </a>
-  <a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-2" href="#">
-    <span class="material-symbols-outlined">person</span>
-    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Profile</span>
-  </a>
-</nav>
+<app-bottom-nav></app-bottom-nav>

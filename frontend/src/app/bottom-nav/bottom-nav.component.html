@@ -1,0 +1,38 @@
+<nav class="app-bottom-nav fixed bottom-0 left-0 w-full flex justify-around items-stretch px-2 py-2 md:hidden bg-[#fbf9f5] shadow-[0_-4px_20px_rgba(2,28,16,0.06)] z-50 rounded-t-3xl" aria-label="Primary">
+  <a routerLink="/recipes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" #feed="routerLinkActive"
+     class="flex flex-1 flex-col items-center justify-center px-2 py-2 min-w-0"
+     [class.bg-secondary-container]="feed.isActive"
+     [class.text-primary]="feed.isActive"
+     [class.rounded-2xl]="feed.isActive"
+     [class.text-on-surface-variant]="!feed.isActive">
+    <span class="material-symbols-outlined">restaurant</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Feed</span>
+  </a>
+  <a routerLink="/search" routerLinkActive="active" #search="routerLinkActive"
+     class="flex flex-1 flex-col items-center justify-center px-2 py-2 min-w-0"
+     [class.bg-secondary-container]="search.isActive"
+     [class.text-primary]="search.isActive"
+     [class.rounded-2xl]="search.isActive"
+     [class.text-on-surface-variant]="!search.isActive">
+    <span class="material-symbols-outlined">search</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Search</span>
+  </a>
+  <a routerLink="/saved" routerLinkActive="active" #saved="routerLinkActive"
+     class="flex flex-1 flex-col items-center justify-center px-2 py-2 min-w-0"
+     [class.bg-secondary-container]="saved.isActive"
+     [class.text-primary]="saved.isActive"
+     [class.rounded-2xl]="saved.isActive"
+     [class.text-on-surface-variant]="!saved.isActive">
+    <span class="material-symbols-outlined">style</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Saved</span>
+  </a>
+  <a routerLink="/profile" routerLinkActive="active" #profile="routerLinkActive"
+     class="flex flex-1 flex-col items-center justify-center px-2 py-2 min-w-0"
+     [class.bg-secondary-container]="profile.isActive"
+     [class.text-primary]="profile.isActive"
+     [class.rounded-2xl]="profile.isActive"
+     [class.text-on-surface-variant]="!profile.isActive">
+    <span class="material-symbols-outlined">person</span>
+    <span class="font-sans text-[11px] uppercase tracking-wider mt-1">Profile</span>
+  </a>
+</nav>

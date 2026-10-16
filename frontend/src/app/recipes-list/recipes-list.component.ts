@@ -1,36 +1,59 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
-import { RouterLink, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { RecipeService } from '../services/recipe.service';
 import { MealService } from '../services/meal.service';
 import { AuthService } from '../services/auth.service';
 import { Recipe } from '../models/recipe';
 import { ImportRecipeDialogComponent } from '../import-recipe-dialog/import-recipe-dialog.component';
+import { BottomNavComponent } from '../bottom-nav/bottom-nav.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @Component({
     standalone: true,
     selector: 'app-recipes-list',
-    imports: [RouterLink, FormsModule, MatDialogModule],
+    imports: [RouterLink, FormsModule, MatDialogModule, BottomNavComponent],
     templateUrl: './recipes-list.component.html',
     styleUrl: './recipes-list.component.scss'
 })
-export class RecipesListComponent implements OnInit {
+export class RecipesListComponent implements OnInit, OnDestroy {
   recipes: Recipe[] = [];
   searchQuery: string = '';
   searchTerms: string[] = [];
+  view: 'feed' | 'search' | 'saved' = 'feed';
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  private navSub?: Subscription;
 
   constructor(
     private recipeService: RecipeService,
     private mealService: MealService,
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
+    this.applyView();
+    this.navSub = this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe(() => this.applyView());
     this.loadRecipes();
+  }
+
+  ngOnDestroy(): void {
+    this.navSub?.unsubscribe();
+  }
+
+  private applyView(): void {
+    const view = this.route.snapshot.data['view'];
+    this.view = view === 'search' || view === 'saved' ? view : 'feed';
+    if (this.view === 'search') {
+      setTimeout(() => this.searchInput?.nativeElement.focus());
+    }
   }
 
   loadRecipes(): void {
@@ -41,9 +64,13 @@ export class RecipesListComponent implements OnInit {
   }
 
   addSearchTerm(): void {
-    if (this.searchQuery.trim() && !this.searchTerms.includes(this.searchQuery.trim())) {
-      this.searchTerms.push(this.searchQuery.trim());
+    const term = this.searchQuery.trim();
+    if (term && !this.searchTerms.includes(term)) {
+      this.searchTerms.push(term);
       this.searchQuery = '';
+    }
+    if (this.searchTerms.length > 0) {
+      this.searchRecipes();
     }
   }
 

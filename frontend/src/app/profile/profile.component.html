@@ -1,0 +1,17 @@
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f5]/80 backdrop-blur-xl shadow-sm">
+  <nav class="flex items-center px-4 py-3 sm:px-8 sm:py-4 max-w-[1440px] mx-auto">
+    <a routerLink="/recipes" class="font-headline italic text-xl sm:text-2xl text-primary">RecipeBox</a>
+  </nav>
+</header>
+
+<main class="pt-28 pb-28 px-6 max-w-lg mx-auto">
+  <span class="text-[#496455] font-bold tracking-[0.2em] text-xs uppercase mb-2 block">Account</span>
+  <h1 class="font-headline text-5xl text-primary mb-4">Profile</h1>
+  <p class="text-on-surface-variant text-lg">{{ email || 'Signed in' }}</p>
+  <button type="button" (click)="logout()"
+    class="mt-10 bg-primary text-on-primary px-8 py-3 rounded-xl font-bold">
+    Log out
+  </button>
+</main>
+
+<app-bottom-nav></app-bottom-nav>

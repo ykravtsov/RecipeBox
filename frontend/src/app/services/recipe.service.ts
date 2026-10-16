@@ -62,15 +62,28 @@ export class RecipeService {
 
     scrapeRecipe(url: string): Observable<Recipe> {
         return this.http.post<any>('/api/scrape-recipe', { url }, { headers: this.getHeaders() }).pipe(
-            map(res => ({
-                ...res,
-                imageUrls: res.image_urls ?? res.imageUrls ?? [],
-                imageUrl: res.image_url ?? res.imageUrl,
-                prepTime: res.prep_time ?? res.prepTime,
-                cookTime: res.cook_time ?? res.cookTime,
-                tags: res.tags ?? [],
-            } as Recipe))
+            map(res => this.mapScrapedRecipe(res))
         );
+    }
+
+    importRecipePhoto(imageBase64: string, mimeType: string): Observable<Recipe> {
+        return this.http.post<any>('/api/import-recipe-photo', {
+            image_base64: imageBase64,
+            mime_type: mimeType,
+        }, { headers: this.getHeaders() }).pipe(
+            map(res => this.mapScrapedRecipe(res))
+        );
+    }
+
+    private mapScrapedRecipe(res: any): Recipe {
+        return {
+            ...res,
+            imageUrls: res.image_urls ?? res.imageUrls ?? [],
+            imageUrl: res.image_url ?? res.imageUrl ?? res.image_urls?.[0] ?? res.imageUrls?.[0],
+            prepTime: res.prep_time ?? res.prepTime,
+            cookTime: res.cook_time ?? res.cookTime,
+            tags: res.tags ?? [],
+        } as Recipe;
     }
 
     searchRecipes(tags?: string[], ingredients?: string[]): Observable<Recipe[]> {
