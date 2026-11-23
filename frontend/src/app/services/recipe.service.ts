@@ -22,8 +22,14 @@ export class RecipeService {
     }
 
     private mapRecipe(res: any): Recipe {
+        const ingredients = (res.ingredients ?? []).map((ing: any) => ({
+            name: ing.name,
+            quantity: Number(ing.quantity) || 0,
+            unit: ing.unit ?? '',
+        }));
         return {
             ...res,
+            ingredients,
             imageUrl: res.image_url ?? res.imageUrl,
             userId: res.user_id ?? res.userId,
             prepTime: res.prep_time ?? res.prepTime,
@@ -76,8 +82,14 @@ export class RecipeService {
     }
 
     private mapScrapedRecipe(res: any): Recipe {
+        const ingredients = (res.ingredients ?? []).map((ing: any) => ({
+            name: ing.name,
+            quantity: Number(ing.quantity) || 0,
+            unit: ing.unit ?? '',
+        }));
         return {
             ...res,
+            ingredients,
             imageUrls: res.image_urls ?? res.imageUrls ?? [],
             imageUrl: res.image_url ?? res.imageUrl ?? res.image_urls?.[0] ?? res.imageUrls?.[0],
             prepTime: res.prep_time ?? res.prepTime,
@@ -94,6 +106,8 @@ export class RecipeService {
         if (ingredients && ingredients.length > 0) {
             params.ingredients = ingredients.join(',');
         }
-        return this.http.get<Recipe[]>('/api/recipes/search', { headers: this.getHeaders(), params });
+        return this.http.get<any[]>('/api/recipes/search', { headers: this.getHeaders(), params }).pipe(
+            map(list => list.map(r => this.mapRecipe(r)))
+        );
     }
 }

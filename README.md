@@ -58,6 +58,10 @@ RecipeBox follows a modern web application architecture with the following compo
 
    ```bash
    cd rust-backend
+   export DATABASE_URL=postgres://postgres:password@localhost/recipebox
+   export JWT_SECRET=dev-secret
+   # Optional: create the e2e test user (testuser@example.com / Test123!)
+   export SEED_TEST_USER=true
    cargo build
    cargo run
    ```

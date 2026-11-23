@@ -27,6 +27,7 @@ services:
       DATABASE_URL: postgres://postgres:password@postgres/recipebox
       JWT_SECRET: ${JWT_SECRET}
       XAI_API_KEY: ${XAI_API_KEY}
+      SEED_TEST_USER: "true"
     ports:
       - "3000:3000"
 

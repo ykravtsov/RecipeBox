@@ -26,6 +26,14 @@ pub enum AppError {
     Uuid(#[from] uuid::Error),
     #[error("{0}")]
     BadRequest(String),
+    #[error("{0}")]
+    NotFound(String),
+    #[error("{0}")]
+    Forbidden(String),
+    #[error("{0}")]
+    Conflict(String),
+    #[error("{0}")]
+    Unauthorized(String),
     #[error("Import failed: {0}")]
     Scrape(#[from] crate::scrape::ScrapeError),
 }
@@ -40,6 +48,10 @@ impl IntoResponse for AppError {
             AppError::SerdeJson(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "JSON error").into_response(),
             AppError::Uuid(_) => (axum::http::StatusCode::BAD_REQUEST, "Invalid UUID").into_response(),
             AppError::BadRequest(message) => (axum::http::StatusCode::BAD_REQUEST, message).into_response(),
+            AppError::NotFound(message) => (axum::http::StatusCode::NOT_FOUND, message).into_response(),
+            AppError::Forbidden(message) => (axum::http::StatusCode::FORBIDDEN, message).into_response(),
+            AppError::Conflict(message) => (axum::http::StatusCode::CONFLICT, message).into_response(),
+            AppError::Unauthorized(message) => (axum::http::StatusCode::UNAUTHORIZED, message).into_response(),
             AppError::Scrape(_) => (axum::http::StatusCode::BAD_GATEWAY, "Could not import recipe").into_response(),
         }
     }
@@ -53,20 +65,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Run migrations
     migration::Migrator::up(&db, None).await?;
 
-    // Seed test user
-    let existing = entities::user::Entity::find()
-        .filter(entities::user::Column::Email.eq("testuser@example.com"))
-        .one(&db)
-        .await?;
-    if existing.is_none() {
-        let password_hash = bcrypt::hash("Test123!", bcrypt::DEFAULT_COST)?;
-        let user = entities::user::ActiveModel {
-            id: Set(uuid::Uuid::new_v4()),
-            email: Set("testuser@example.com".to_string()),
-            password_hash: Set(password_hash),
-            created_at: Set(chrono::Utc::now()),
-        };
-        user.insert(&db).await?;
+    // Seed test user only when explicitly enabled (local/e2e). Never in production by default.
+    let seed_test_user = std::env::var("SEED_TEST_USER")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    if seed_test_user {
+        let existing = entities::user::Entity::find()
+            .filter(entities::user::Column::Email.eq("testuser@example.com"))
+            .one(&db)
+            .await?;
+        if existing.is_none() {
+            let password_hash = bcrypt::hash("Test123!", bcrypt::DEFAULT_COST)?;
+            let user = entities::user::ActiveModel {
+                id: Set(uuid::Uuid::new_v4()),
+                email: Set("testuser@example.com".to_string()),
+                password_hash: Set(password_hash),
+                created_at: Set(chrono::Utc::now()),
+            };
+            user.insert(&db).await?;
+        }
     }
 
     let cors = CorsLayer::new()

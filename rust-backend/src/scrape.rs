@@ -190,6 +190,7 @@ Rules:
 - Return only the JSON object"#;
 
 async fn fetch_html(client: &Client, url: &str) -> Result<String, ScrapeError> {
+    validate_public_http_url(url)?;
     let response = client
         .get(url)
         .header("User-Agent", user_agent_for(url))
@@ -205,6 +206,69 @@ async fn fetch_html(client: &Client, url: &str) -> Result<String, ScrapeError> {
         )));
     }
     Ok(response.text().await?)
+}
+
+/// Block SSRF to localhost / private / link-local / metadata endpoints.
+fn validate_public_http_url(url: &str) -> Result<(), ScrapeError> {
+    let parsed = Url::parse(url).map_err(|_| ScrapeError::Message("Invalid URL".into()))?;
+    if parsed.scheme() != "http" && parsed.scheme() != "https" {
+        return Err(ScrapeError::Message("Only http(s) URLs are allowed".into()));
+    }
+    if parsed.username() != "" || parsed.password().is_some() {
+        return Err(ScrapeError::Message("URLs with credentials are not allowed".into()));
+    }
+    let host = parsed
+        .host_str()
+        .ok_or_else(|| ScrapeError::Message("URL host is required".into()))?
+        .to_ascii_lowercase();
+    if host == "localhost"
+        || host.ends_with(".localhost")
+        || host == "metadata.google.internal"
+        || host.ends_with(".internal")
+        || host == "0.0.0.0"
+    {
+        return Err(ScrapeError::Message("URL host is not allowed".into()));
+    }
+    if let Ok(ip) = host.parse::<std::net::IpAddr>() {
+        if !is_public_ip(ip) {
+            return Err(ScrapeError::Message("URL host is not allowed".into()));
+        }
+    } else if looks_like_numeric_host(&host) {
+        // Reject decimal/octal/hex IP obfuscation that Url may leave as a domain-like host.
+        return Err(ScrapeError::Message("URL host is not allowed".into()));
+    }
+    Ok(())
+}
+
+fn looks_like_numeric_host(host: &str) -> bool {
+    // Bare IPv4-like strings without dots (e.g. 2130706433) or hex hosts.
+    host.chars().all(|c| c.is_ascii_digit())
+        || (host.starts_with("0x") && host[2..].chars().all(|c| c.is_ascii_hexdigit()))
+}
+
+fn is_public_ip(ip: std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(v4) => {
+            !(v4.is_private()
+                || v4.is_loopback()
+                || v4.is_link_local()
+                || v4.is_broadcast()
+                || v4.is_unspecified()
+                || v4.is_multicast()
+                || v4.octets()[0] == 0
+                // AWS/GCP/Azure metadata
+                || v4.octets() == [169, 254, 169, 254]
+                // CGNAT
+                || (v4.octets()[0] == 100 && (v4.octets()[1] & 0b1100_0000) == 0b0100_0000))
+        }
+        std::net::IpAddr::V6(v6) => {
+            !(v6.is_loopback()
+                || v6.is_unspecified()
+                || v6.is_multicast()
+                || v6.is_unique_local()
+                || v6.is_unicast_link_local())
+        }
+    }
 }
 
 fn user_agent_for(url: &str) -> &'static str {
@@ -1244,5 +1308,17 @@ mod tests {
         assert_eq!(recipe.title, "Soup");
         assert_eq!(recipe.ingredients.len(), 1);
         assert_eq!(recipe.steps, vec!["Simmer.".to_string()]);
+    }
+
+    #[test]
+    fn public_http_urls_are_allowed_and_private_hosts_are_blocked() {
+        assert!(validate_public_http_url("https://www.simplyrecipes.com/cake").is_ok());
+        assert!(validate_public_http_url("http://localhost/secret").is_err());
+        assert!(validate_public_http_url("http://127.0.0.1/secret").is_err());
+        assert!(validate_public_http_url("http://192.168.1.10/admin").is_err());
+        assert!(validate_public_http_url("http://10.0.0.5/internal").is_err());
+        assert!(validate_public_http_url("http://169.254.169.254/latest/meta-data").is_err());
+        assert!(validate_public_http_url("ftp://example.com/file").is_err());
+        assert!(validate_public_http_url("http://user:pass@example.com/").is_err());
     }
 }

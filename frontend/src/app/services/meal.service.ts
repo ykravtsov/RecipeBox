@@ -57,16 +57,17 @@ export class MealService {
 
         recipes.forEach(recipe => {
             recipe.ingredients.forEach(ing => {
-                const key = `${ing.name.toLowerCase()}-${ing.unit.toLowerCase()}`;
+                const qty = Number(ing.quantity) || 0;
+                const key = `${ing.name.toLowerCase()}-${(ing.unit || '').toLowerCase()}`;
                 if (ingredientMap.has(key)) {
                     const existing = ingredientMap.get(key)!;
                     ingredientMap.set(key, {
-                        quantity: existing.quantity + ing.quantity,
+                        quantity: existing.quantity + qty,
                         unit: ing.unit
                     });
                 } else {
                     ingredientMap.set(key, {
-                        quantity: ing.quantity,
+                        quantity: qty,
                         unit: ing.unit
                     });
                 }

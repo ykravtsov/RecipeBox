@@ -75,9 +75,9 @@ pub async fn get_recipe(
     let model = entities::Entity::find_by_id(id)
         .one(&db)
         .await?
-        .ok_or_else(|| sea_orm::DbErr::Custom("Not found".to_string()))?;
+        .ok_or_else(|| crate::AppError::NotFound("Recipe not found".into()))?;
     if model.user_id != user_id {
-        return Err(sea_orm::DbErr::Custom("Unauthorized".to_string()).into());
+        return Err(crate::AppError::Forbidden("Not allowed to access this recipe".into()));
     }
     let ingredients: Vec<Ingredient> = serde_json::from_value(model.ingredients)
         .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))?;
@@ -155,9 +155,12 @@ pub async fn update_recipe(
     Json(payload): Json<CreateRecipe>,
 ) -> Result<Json<RecipeResponse>, crate::AppError> {
     let user_id = Uuid::parse_str(&claims.sub)?;
-    let recipe_model = entities::Entity::find_by_id(id).one(&db).await?.ok_or(sea_orm::DbErr::Custom("Not found".to_string()))?;
+    let recipe_model = entities::Entity::find_by_id(id)
+        .one(&db)
+        .await?
+        .ok_or_else(|| crate::AppError::NotFound("Recipe not found".into()))?;
     if recipe_model.user_id != user_id {
-        return Err(sea_orm::DbErr::Custom("Unauthorized".to_string()).into());
+        return Err(crate::AppError::Forbidden("Not allowed to update this recipe".into()));
     }
     let mut recipe: entities::ActiveModel = recipe_model.into();
     let ingredients_value = serde_json::to_value(&payload.ingredients)
@@ -206,7 +209,7 @@ pub async fn search_recipes(
     let query = entities::Entity::find()
         .filter(entities::Column::UserId.eq(user_id));
 
-    let _tags: Option<Vec<String>> = params.get("tags").map(|s: &String| {
+    let search_tags: Option<Vec<String>> = params.get("tags").map(|s: &String| {
         s.split(',')
             .map(|t: &str| t.trim().to_lowercase())
             .filter(|t: &String| !t.is_empty() && t.len() <= 50)
@@ -231,20 +234,43 @@ pub async fn search_recipes(
         let tags: Option<Vec<String>> = model.tags.clone().map(|t| serde_json::from_value::<Vec<String>>(t)
             .map_err(|_| sea_orm::DbErr::Custom("Deserialization error".to_string()))).transpose()?;
 
-        let mut matches = true;
+        // OR across title / tags / ingredients so a single search box works as expected.
+        let has_filters = search_tags.is_some() || search_ingredients.is_some();
+        let mut matches = !has_filters;
 
-        if let Some(search_tags) = &tags {
-            if let Some(recipe_tags) = &tags {
-                let recipe_tags_lower: Vec<String> = recipe_tags.iter().map(|t| t.to_lowercase()).collect();
-                matches &= search_tags.iter().any(|st| recipe_tags_lower.contains(st));
-            } else {
-                matches = false;
+        if has_filters {
+            let title_lower = model.title.to_lowercase();
+            let terms: Vec<&String> = search_tags
+                .iter()
+                .flatten()
+                .chain(search_ingredients.iter().flatten())
+                .collect();
+
+            if terms.iter().any(|term| title_lower.contains(term.as_str())) {
+                matches = true;
             }
-        }
 
-        if let Some(search_ingredients) = &search_ingredients {
-            let recipe_ingredients_lower: Vec<String> = ingredients.iter().map(|i: &Ingredient| i.name.to_lowercase()).collect();
-            matches &= search_ingredients.iter().any(|si: &String| recipe_ingredients_lower.iter().any(|ri: &String| ri.contains(si)));
+            if !matches {
+                if let Some(wanted) = &search_tags {
+                    if let Some(recipe_tags) = &tags {
+                        let recipe_tags_lower: Vec<String> =
+                            recipe_tags.iter().map(|t| t.to_lowercase()).collect();
+                        matches = wanted.iter().any(|st| recipe_tags_lower.iter().any(|rt| rt.contains(st)));
+                    }
+                }
+            }
+
+            if !matches {
+                if let Some(wanted) = &search_ingredients {
+                    let recipe_ingredients_lower: Vec<String> = ingredients
+                        .iter()
+                        .map(|i: &Ingredient| i.name.to_lowercase())
+                        .collect();
+                    matches = wanted
+                        .iter()
+                        .any(|si: &String| recipe_ingredients_lower.iter().any(|ri: &String| ri.contains(si)));
+                }
+            }
         }
 
         if matches {
@@ -273,9 +299,12 @@ pub async fn delete_recipe(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, crate::AppError> {
     let user_id = Uuid::parse_str(&claims.sub)?;
-    let recipe = entities::Entity::find_by_id(id).one(&db).await?.ok_or(sea_orm::DbErr::Custom("Not found".to_string()))?;
+    let recipe = entities::Entity::find_by_id(id)
+        .one(&db)
+        .await?
+        .ok_or_else(|| crate::AppError::NotFound("Recipe not found".into()))?;
     if recipe.user_id != user_id {
-        return Err(sea_orm::DbErr::Custom("Unauthorized".to_string()).into());
+        return Err(crate::AppError::Forbidden("Not allowed to delete this recipe".into()));
     }
     entities::Entity::delete_by_id(id).exec(&db).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -308,7 +337,14 @@ pub async fn register(
         .one(&db)
         .await?;
     if existing.is_some() {
-        return Err(crate::AppError::SeaOrm(sea_orm::DbErr::Custom("User already exists".to_string())));
+        return Err(crate::AppError::Conflict("User already exists".into()));
+    }
+
+    if req.email.trim().is_empty() || !req.email.contains('@') {
+        return Err(crate::AppError::BadRequest("Valid email is required".into()));
+    }
+    if req.password.len() < 6 {
+        return Err(crate::AppError::BadRequest("Password must be at least 6 characters".into()));
     }
 
     // Hash password
@@ -338,11 +374,11 @@ pub async fn login(
         .filter(entities::user::Column::Email.eq(&req.email))
         .one(&db)
         .await?
-        .ok_or_else(|| sea_orm::DbErr::Custom("Invalid credentials".to_string()))?;
+        .ok_or_else(|| crate::AppError::Unauthorized("Invalid credentials".into()))?;
 
     // Verify password
     if !verify(&req.password, &user.password_hash)? {
-        return Err(crate::AppError::SeaOrm(sea_orm::DbErr::Custom("Invalid credentials".to_string())));
+        return Err(crate::AppError::Unauthorized("Invalid credentials".into()));
     }
 
     // Generate token
