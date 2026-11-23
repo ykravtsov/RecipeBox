@@ -452,7 +452,8 @@ jobs:
           tags: recipebox-frontend:test
 
   test-e2e:
-    runs-on: ubuntu-latest
+    # Playwright 1.57 does not support Chromium on ubuntu-26.04 (current ubuntu-latest).
+    runs-on: ubuntu-24.04
     needs: [build-backend, build-frontend]
     if: |
       always() &&

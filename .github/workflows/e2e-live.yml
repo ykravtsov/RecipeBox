@@ -10,7 +10,8 @@ on:
 
 jobs:
   test-e2e-live:
-    runs-on: ubuntu-latest
+    # Playwright 1.57 does not support Chromium on ubuntu-26.04 (current ubuntu-latest).
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
