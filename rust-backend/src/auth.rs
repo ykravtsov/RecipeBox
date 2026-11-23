@@ -29,7 +29,7 @@ where
 
         let token = auth_header.ok_or(AuthError::MissingToken)?;
 
-        let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+        let jwt_secret = std::env::var("JWT_SECRET").map_err(|_| AuthError::InvalidToken)?;
         let token_data = decode::<Claims>(
             token,
             &DecodingKey::from_secret(jwt_secret.as_bytes()),
@@ -42,7 +42,7 @@ where
 }
 
 pub fn generate_jwt(user_id: &str) -> Result<String, AuthError> {
-    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let jwt_secret = std::env::var("JWT_SECRET").map_err(|_| AuthError::InvalidToken)?;
     let jwt_expiration_days: i64 = std::env::var("JWT_EXPIRATION_DAYS")
         .unwrap_or_else(|_| "7".to_string())
         .parse()
@@ -50,7 +50,7 @@ pub fn generate_jwt(user_id: &str) -> Result<String, AuthError> {
 
     let expiration = chrono::Utc::now()
         .checked_add_signed(chrono::Duration::days(jwt_expiration_days))
-        .expect("valid timestamp")
+        .ok_or(AuthError::InvalidToken)?
         .timestamp() as usize;
 
     let claims = Claims {

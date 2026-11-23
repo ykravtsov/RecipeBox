@@ -55,7 +55,16 @@ export class WelcomeComponent implements OnInit {
       const { registerEmail, registerPassword } = this.registerForm.value;
       this.authService.register(registerEmail, registerPassword).subscribe({
         next: () => this.router.navigate(['/recipes']),
-        error: (err: any) => this.registerError = err?.error?.message || 'Registration failed.'
+        error: (err: any) => {
+          const body = err?.error;
+          if (typeof body === 'string' && body.trim()) {
+            this.registerError = body;
+          } else if (err?.status === 409) {
+            this.registerError = 'An account with that email already exists.';
+          } else {
+            this.registerError = body?.message || 'Registration failed.';
+          }
+        }
       });
     }
   }

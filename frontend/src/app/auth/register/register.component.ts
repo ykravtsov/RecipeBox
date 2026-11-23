@@ -76,21 +76,16 @@ export class RegisterComponent {
       const { email, password } = this.registerForm.value;
       this.authService.register(email, password).subscribe({
         next: () => {
-          // After successful registration, automatically log the user in
-          this.authService.login(email, password).subscribe({
-            next: () => {
-              this.router.navigate(['/recipes']);
-            },
-            error: (loginError) => {
-              // If auto-login fails, redirect to login page
-              this.router.navigate(['/login']);
-            }
-          });
+          this.router.navigate(['/recipes']);
         },
         error: (error) => {
-          if (error.error && error.error.length > 0) {
-            // Show specific validation errors from API
-            this.errorMessage = error.error.map((e: any) => e.description).join('. ');
+          const body = error?.error;
+          if (typeof body === 'string' && body.trim()) {
+            this.errorMessage = body;
+          } else if (Array.isArray(body) && body.length > 0) {
+            this.errorMessage = body.map((e: any) => e.description || e).join('. ');
+          } else if (error?.status === 409) {
+            this.errorMessage = 'An account with that email already exists.';
           } else {
             this.errorMessage = 'Registration failed. Please try again.';
           }
